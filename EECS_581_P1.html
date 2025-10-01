@@ -181,6 +181,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             if (button.is_hovering && event.key === "f") {
                 const sound = new Audio('soundFiles/flag.mov');
                 sound.play();
+                sound.volume = 0.05;
                 console.log('flag key:', !button.is_flagged, !button.disabled, flag_count > 0);
                 if (!button.is_flagged && !button.disabled && flag_count > 0) { // flag
                     console.log('flagging now');
@@ -251,22 +252,27 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 if (minefield[id] == "*") {
                     const sound = new Audio('soundFiles/lose.mov');
                     sound.play();
+                    sound.volume = 0.05;
                     gameOver();
                 }
                 const sound = new Audio('soundFiles/safe.mov');
                 sound.play();
+                sound.volume = 0.01;
                 reveal(this);
             }
 
             // check for victory
             console.log('checking for victory:', revealed_count, 100 - NUM_MINES);
             if (revealed_count == 100 - NUM_MINES) {
-                const sound = new Audio('soundFiles/win.mov');
+                //const sound = new Audio('soundFiles/win.mov');
+                //sound.play();
+                const sound = new Audio('soundFiles/asmr.m4a');
                 sound.play();
                 game_in_progress = false;
                 board_initialized = false;
                 document.getElementById("start_game_button").innerText = "New Game?";
                 document.getElementById("game_status").innerText = "Game Over: Victory!";
+                activateVictoryMode();
             }
 
         }
@@ -582,6 +588,37 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 if (val !== "*" && !getBtn(idx).disabled) return idx;
             }
             return undefined;
+        }
+
+        function activateVictoryMode() {
+            if (document.getElementById("ZachChoiVideo")) return; // prevents function from adding multiple videos
+
+            // Check if container exists, otherwise creat it
+            let container = document.getElementById("videoContainer");
+            if (!container) {
+                container = document.createElement("div");
+                container.id = "videoContainer";
+                document.body.appendChild(container);
+            }
+
+            const iframe = document.createElement("iframe");
+            iframe.id = "ZachChoiVideo";
+            iframe.width = "300";
+            iframe.height = "315";
+            iframe.src = iframe.src = 'https://www.youtube.com/embed/yYZ_F14NedI?autoplay=1&mute=1';
+            iframe.frameBorder = "0";
+            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+            iframe.allowFullscreen = true;
+
+            // Style it as a small floating window
+            iframe.style.position = 'fixed';
+            iframe.style.bottom = '10px';
+            iframe.style.right = '10px';
+            iframe.style.borderRadius = '12px';
+            iframe.style.boxShadow = '0 0 10px rgba(0,0,0,0.4)';
+            iframe.style.zIndex = '9999';
+
+            container.appendChild(iframe);
         }
     </script>
 </body>
