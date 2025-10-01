@@ -461,6 +461,29 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         const bestMediumMoveNonRandom = () => {
             // TODO: Hunter - implement.
             let bestMove;
+            for (let idx = 0; idx < minefield.length; idx++) {
+                const xy = idxToXY(idx);
+
+                if (xy.x === 0 || xy.x === 9 || xy.y === 0 || xy.y === 9) continue;
+
+                let neighborCount = 0;
+
+                let value = minefield[idx];
+
+                if (!getBtn(idx-1-10).disabled) neighborCount++;
+                if (!getBtn(idx-0-10).disabled) neighborCount++;
+                if (!getBtn(idx+1-10).disabled) neighborCount++;
+                if (!getBtn(idx-1-0).disabled) neighborCount++;
+                if (!getBtn(idx+1-0).disabled) neighborCount++;
+                if (!getBtn(idx-1+10).disabled) neighborCount++;
+                if (!getBtn(idx-0+10).disabled) neighborCount++;
+                if (!getBtn(idx+1+10).disabled) neighborCount++;
+
+                if (neighborCount == value) {
+                    
+                }
+
+            }
             return bestMove;
         }
 
