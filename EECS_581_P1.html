@@ -462,6 +462,9 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             // TODO: Hunter - implement.
             let bestMove;
             for (let idx = 0; idx < minefield.length; idx++) {
+                // If tile is hidden, move on
+                if (!getBtn(idx).disabled) continue;
+
                 // Establish variable to keep track of no. of hidden neighbors, and variable for number of cell
                 let neighborCount = 0;
                 let value = minefield[idx];
@@ -486,7 +489,25 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 if (neighborCount == value) {
                     bestMove = {flag: buttonsToFlag};
                     break;
-                } else continue; // If not, then move to next cell and repeat
+                } else {
+                    let flaggedNeighborCount = 0;
+                    let buttonsToReveal = [];
+
+                    for (let i = 0; i < neighbors.length(); i++) {
+                        if (neighbors[i] >= 0 && neighbors[i] < minefield.length) {
+                            if (getBtn(neighbors[i]).is_flagged) {
+                                flaggedNeighborCount++;
+                            } else buttonsToFlag.push(neighbors[i]);;
+                        }
+                    }
+
+                    if (flaggedNeighborCount == value) {
+                        bestMove = {reveal: buttonsToReveal};
+                        break;
+                    } else {
+                        continue;
+                    }
+                }; // If not, then move to next cell and repeat
 
             }
             return bestMove;
