@@ -505,9 +505,10 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                     }
 
                     if (flaggedNeighborCount == value) {
+                        const randomIndex = Math.floor(Math.random() * buttonsToReveal.length);
                         bestMove = {
                             flag: [],
-                            click: buttonsToReveal
+                            click: buttonsToReveal[randomIndex]
                         };
                         break;
                     } else {
