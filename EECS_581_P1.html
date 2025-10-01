@@ -252,20 +252,18 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 if (minefield[id] == "*") {
                     const sound = new Audio('soundFiles/lose.mov');
                     sound.play();
-                    sound.volume = 0.05;
+                    sound.volume = 0.10;
                     gameOver();
                 }
                 const sound = new Audio('soundFiles/safe.mov');
                 sound.play();
-                sound.volume = 0.01;
+                sound.volume = 0.05;
                 reveal(this);
             }
 
             // check for victory
             console.log('checking for victory:', revealed_count, 100 - NUM_MINES);
             if (revealed_count == 100 - NUM_MINES) {
-                //const sound = new Audio('soundFiles/win.mov');
-                //sound.play();
                 const sound = new Audio('soundFiles/asmr.m4a');
                 sound.play();
                 game_in_progress = false;
