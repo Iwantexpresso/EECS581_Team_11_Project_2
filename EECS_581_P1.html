@@ -179,7 +179,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             }
             let button = document.elementFromPoint(mouse_x, mouse_y);
             if (button.is_hovering && event.key === "f") {
-                const sound = new Audio('soundFiles/flag.mov');
+                const sound = new Audio('soundFiles/flag.mov'); // plays sound when placing/removing flag
                 sound.play();
                 sound.volume = 0.05;
                 console.log('flag key:', !button.is_flagged, !button.disabled, flag_count > 0);
@@ -250,21 +250,21 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             // we can disable buttons once their number is revealed, so this is all we need to check
             if (!this.is_flagged) {
                 if (minefield[id] == "*") {
-                    const sound = new Audio('soundFiles/lose.mov');
+                    const sound = new Audio('soundFiles/lose.mov'); // plays game over sound
                     sound.play();
-                    sound.volume = 0.10;
+                    sound.volume = 0.075;
                     gameOver();
                 }
-                const sound = new Audio('soundFiles/safe.mov');
+                const sound = new Audio('soundFiles/safe.mov'); // plays audio when safe cell clicked
                 sound.play();
-                sound.volume = 0.05;
+                sound.volume = 0.025;
                 reveal(this);
             }
 
             // check for victory
             console.log('checking for victory:', revealed_count, 100 - NUM_MINES);
             if (revealed_count == 100 - NUM_MINES) {
-                const sound = new Audio('soundFiles/asmr.m4a');
+                const sound = new Audio('soundFiles/asmr.m4a'); // plays asmr video when player wins
                 sound.play();
                 game_in_progress = false;
                 board_initialized = false;
