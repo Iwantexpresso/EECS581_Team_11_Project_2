@@ -487,7 +487,10 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
 
                 // If no. of hidden neighbors = number of cell, best move is to flag all neighbors
                 if (neighborCount == value) {
-                    bestMove = {flag: buttonsToFlag};
+                    bestMove = {
+                        flag: buttonsToFlag,
+                        click: undefined
+                    };
                     break;
                 } else {
                     let flaggedNeighborCount = 0;
@@ -502,7 +505,10 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                     }
 
                     if (flaggedNeighborCount == value) {
-                        bestMove = {reveal: buttonsToReveal};
+                        bestMove = {
+                            flag: [],
+                            click: buttonsToReveal
+                        };
                         break;
                     } else {
                         continue;
