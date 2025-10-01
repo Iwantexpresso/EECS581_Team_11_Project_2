@@ -252,12 +252,12 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 if (minefield[id] == "*") {
                     const sound = new Audio('soundFiles/lose.mov'); // plays game over sound
                     sound.play();
-                    sound.volume = 0.075;
+                    sound.volume = 0.05;
                     gameOver();
                 }
                 const sound = new Audio('soundFiles/safe.mov'); // plays audio when safe cell clicked
                 sound.play();
-                sound.volume = 0.025;
+                sound.volume = 0.01;
                 reveal(this);
             }
 
