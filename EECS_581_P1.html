@@ -463,25 +463,33 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             let bestMove;
             for (let idx = 0; idx < minefield.length; idx++) {
                 const xy = idxToXY(idx);
-
                 if (xy.x === 0 || xy.x === 9 || xy.y === 0 || xy.y === 9) continue;
 
+                // Establish variable to keep track of no. of hidden neighbors, and variable for number of cell
                 let neighborCount = 0;
-
                 let value = minefield[idx];
 
-                if (!getBtn(idx-1-10).disabled) neighborCount++;
-                if (!getBtn(idx-0-10).disabled) neighborCount++;
-                if (!getBtn(idx+1-10).disabled) neighborCount++;
-                if (!getBtn(idx-1-0).disabled) neighborCount++;
-                if (!getBtn(idx+1-0).disabled) neighborCount++;
-                if (!getBtn(idx-1+10).disabled) neighborCount++;
-                if (!getBtn(idx-0+10).disabled) neighborCount++;
-                if (!getBtn(idx+1+10).disabled) neighborCount++;
+                // Array of all possible neighbors
+                let neighbors = [idx-1-10, idx-0-10, idx+1-10, idx-1-0, idx+1-0, idx-1+10, idx-0+10, idx+1+10]
 
-                if (neighborCount == value) {
-                    
+                //Array of buttons to flag, if needed later
+                let buttonsToFlag = [];
+                
+                // Check if each neighbor is even in the grid; if so, check if neighbor is hidden, and increment neighborCount and push neighbor to buttonsToFlag if so
+                for (let neighbor in neighbors) {
+                    if (neighbor > 0 && neighbor < minefield.length) {
+                        if (!getBtn(neighbor).disabled) {
+                            neighborCount++;
+                            buttonsToFlag.push(neighbor);
+                        };
+                    }
                 }
+
+                // If no. of hidden neighbors = number of cell, best move is to flag all neighbors
+                if (neighborCount == value) {
+                    bestMove = flag: buttonsToFlag;
+                    break;
+                } else continue; // If not, then move to next cell and repeat
 
             }
             return bestMove;
