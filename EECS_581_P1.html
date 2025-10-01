@@ -68,6 +68,14 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         <option value="19">19</option>
         <option value="20">20</option>
     </select>
+    <!--Select difficulty for AI mode-->
+    <label for ="gameMode">Game Mode: </label>
+    <select id="gameMode">
+        <option value="single">Classic Single Player</option>
+        <option value="easy">Easy AI</option>
+        <option value="medium">Medium AI</option>
+        <option value="hard">Hard AI</option>
+    </select>
 
     <p>Controls: left click tile to reveal, press f while hovering over tile to flag it</p>
     <div style="display:flex; align-items:center; gap:60px;">
@@ -92,6 +100,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         let mouse_y = 0;
         let game_in_progress = false;
         let board_initialized = false;
+        let game_mode;
 
         //get access to the start game button
         var start_game_button = document.getElementById("start_game_button");
@@ -209,6 +218,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 NUM_MINES = document.getElementById("mineCount").value;
                 flag_count = NUM_MINES;
                 revealed_count = 0;
+                game_mode = document.getElementById("gameMode"); // set game mode variable
 
                 //get the settings paragraph
                 var game_status = document.getElementById("game_status");
@@ -219,7 +229,6 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 flag_counter.innerText = `${flag_count} flags/mines left`;
                 flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
                 document.getElementById("start_game_button").innerText = "Game Started!";
-
                 generate_game_grid();
                 game_in_progress = true;
 
