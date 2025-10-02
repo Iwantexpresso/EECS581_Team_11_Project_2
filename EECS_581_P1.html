@@ -68,15 +68,23 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         <option value="19">19</option>
         <option value="20">20</option>
     </select>
-    <!--Select difficulty for AI mode-->
-    <label for ="gameMode">Game Mode: </label>
-    <select id="gameMode">
+    <!--PROJECT 2 START ----------------------------------------------------------------------------------------------------------------------------------->
+    <!--Select game mode--> 
+    <label for="gameMode">Game Mode: </label>
+    <select id="gameMode" required>
         <option value="single">Classic Single Player</option>
-        <option value="easy">Easy AI</option>
-        <option value="medium">Medium AI</option>
-        <option value="hard">Hard AI</option>
+        <option value="auto">Automatic AI</option>
+        <option value="interactive">Interactive AI</option>
     </select>
-
+    <!--Select difficulty for AI modes-->
+    <label for="difficulty">AI Difficulty: </label>
+    <select id="difficulty">
+        <option value=" "> -- </option>
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+    <!--PROJECT 2 END------------------------------------------------------------------------------------------------------------------------------------->
+    </select>
     <p>Controls: left click tile to reveal, press f while hovering over tile to flag it</p>
     <div style="display:flex; align-items:center; gap:60px;">
         <p id="game_status" style="color:blue;"></p> <!--Displays game status: Playing, Victory, Defeat -->
@@ -101,6 +109,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         let game_in_progress = false;
         let board_initialized = false;
         let game_mode;
+        let difficulty;
 
         //get access to the start game button
         var start_game_button = document.getElementById("start_game_button");
@@ -213,12 +222,20 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         // Apply mine count settings when start button is clicked, and other status indicators
         function apply_settings() {
             if (game_in_progress == false) {
+                // PROJECT 2 START ------------------------------------------------------------------------------------------------------------------
+                // Game mode settings
+                game_mode = document.getElementById("gameMode"); // set game mode element
+                difficulty = document.getElementById("difficulty"); // set difficulty element
+                if (game_mode.value != "single" && difficulty.value == " ") { // validate difficulty chosen if AI mode chosen
+                    alert("Please select the AI difficulty level");
+                    return;
+                }
+                // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
 
                 // Gets number of mines from html mineCount selection
                 NUM_MINES = document.getElementById("mineCount").value;
                 flag_count = NUM_MINES;
                 revealed_count = 0;
-                game_mode = document.getElementById("gameMode"); // set game mode variable
 
                 //get the settings paragraph
                 var game_status = document.getElementById("game_status");
