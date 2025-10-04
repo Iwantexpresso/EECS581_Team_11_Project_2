@@ -369,11 +369,32 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             shuffle(minefield); // Randomizes minefield
             console.log("start: " + minefield);
 
-            // If after shuffling there's a mine in the starting position, shuffle until it isn't
-            if (minefield[start_index] == "*") {
-                while (minefield[start_index] == "*") {
-                    shuffle(minefield);
-                    console.log("iteration: " + minefield); // Prints iterations
+            // ENSURE FIRST CLICK AND ADJACENT CELLS ARE SAFE
+            // Get coordinates of first clicked title (start_index) + neighbors
+            const safeIndices = [start_index];
+            const startRow = Math.floor(start_index / 10);
+            const startCol = start_index % 10;
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    const newRow = startRow + dr;
+                    const newCol = startCol + dc;
+                    if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
+                        safeIndices.push(newRow * 10 + newCol);
+                    }
+                }
+            }
+            console.log("safe indices: " + safeIndices);
+            // Ensure no mines in the safe zone (first clicked title + neighbors)
+            for (const index of safeIndices) {
+                if (minefield[index] == "*") {
+                    // Find a non-safe index to swap with 
+                    let swapIndex;
+                    do {
+                        swapIndex = Math.floor(Math.random() * 100);
+                    } while (safeIndices.includes(swapIndex) || minefield[swapIndex] == "*"); // Ensure swapIndex is not in safeIndices and is not a mine
+                    // Swap the mine with the non-mine
+                    [minefield[index], minefield[swapIndex]] = [minefield[swapIndex], minefield[index]];
+                    console.log(`Swapped mine at index ${index} with non-mine at index ${swapIndex}`); // Log the swap operation
                 }
             }
             console.log("end: " + minefield);
@@ -413,7 +434,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             // Prints minefield in console for testing
             console.log("Minefield:")
             for (let i = 0; i < 100; i += 10) {
-                line = "";
+                let line = "";
                 for (let j = 0; j < 10; j++) {
                     line += minefield[i + j] + " ";
                 }
