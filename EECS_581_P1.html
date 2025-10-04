@@ -445,12 +445,9 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         }
 
         // UNLESS NESSECARY NEW CODE BELOW THIS LINE
+        const sleep = (ms) => new Promise(reslove => setTimeout(reslove, ms));
 
-        const aiMoveQueue = [];
-
-        const xyToIdx = xyObj => {
-            return xyObj.y * 10 + xyObj.x;
-        }
+        const xyToIdx = xyObj => xyObj.y * 10 + xyObj.x;
 
         const idxToXY = idx => {
             return {
@@ -463,8 +460,16 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
 
         const bestEasyMove = () => {
             // TODO: Anya - implement.
-            let bestMove;
-            return bestMove;
+            for (const [idx, val] of minefield.entries()) { // groovy es6 syntax
+                const val = minefield[idx];
+                if (!getBtn(idx).disabled) {
+                    return {
+                        click: idx,
+                        flag: []
+                    };
+                }
+            }
+            return undefined;
         }
 
         const bestMediumMoveNonRandom = () => {
@@ -526,7 +531,6 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 }; // If not, then move to next cell and repeat
 
             }
-            return bestMove;
         }
 
         const bestMediumMove = () => {
@@ -539,107 +543,33 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             return bestMove;
         }
 
-        /**
-         * Finds 1-2-1 patters and the tiles to click and flag.
-         * Returns object with fields click: number - idx to click, flag: Array<number> - idxs to flag.
-        */
-        const find121 = () => {
-            for (let idx = 0; idx < minefield.length; idx++) {
-                const xy = idxToXY(idx);
-
-                if (xy.x === 0 || xy.x === 9 || xy.y === 0 || xy.y === 9) continue;
-        
-                else if (minefield[idx] === 2) {
-                    if (minefield[idx - 1] === 1 && minefield[idx + 1] === 1) { // horizontal 1-2-1
-                        if ((idx - 2 >= 0 && !getBtn(idx-2).disabled) ||
-                            (idx + 2 < minefield.length && !getBtn(idx+2).disabled)) { // unclicked to left and right of 1-2-1
-                                continue;
-                            }
-                        else if (!getBtn(idx-1-10).disabled &&
-                                !getBtn(idx-0-10).disabled &&
-                                !getBtn(idx+1-10).disabled &&
-                                getBtn(idx-1+10).disabled &&
-                                getBtn(idx-0+10).disabled &&
-                                getBtn(idx+1+10).disabled) { // unclicked on top
-                                    return {
-                                        click: idx-10,
-                                        flag: [idx-10-1, idx-10+1]
-                                    }
-                                }
-                        else if (getBtn(idx-1-10).disabled &&
-                                getBtn(idx-0-10).disabled &&
-                                getBtn(idx+1-10).disabled &&
-                                !getBtn(idx-1+10).disabled &&
-                                !getBtn(idx-0+10).disabled &&
-                                !getBtn(idx+1+10).disabled) { // unclicked on bottom
-                                    return {
-                                        click: idx+10,
-                                        flag: [idx+10-1, idx+10+1]
-                                    }
-                                }
-                        else continue;
-                    }
-
-                    if (minefield[idx - 10] === 1 && minefield[idx + 10] === 1) { // vertical 1-2-1
-                        if ((idx - 20 >= 0 && !getBtn(idx-20).disabled) ||
-                            (idx + 20 < minefield.length && !getBtn(idx+20).disabled)) { // unclicked to top and bottom of 1-2-1
-                                continue;
-                            }
-                        else if (!getBtn(idx-10-1).disabled &&
-                                !getBtn(idx-0-1).disabled &&
-                                !getBtn(idx+10-1).disabled &&
-                                getBtn(idx-10+1).disabled &&
-                                getBtn(idx-0+1).disabled &&
-                                getBtn(idx+10+1).disabled) { // unclicked left
-                                    return {
-                                        click: idx-1,
-                                        flag: [idx-1-10, idx-1+10]
-                                    }
-                                }
-                        else if (getBtn(idx-10-1).disabled &&
-                                getBtn(idx-0-1).disabled &&
-                                getBtn(idx+10-1).disabled &&
-                                !getBtn(idx-10+1).disabled &&
-                                !getBtn(idx-0+1).disabled &&
-                                !getBtn(idx+10+1).disabled) { // unclicked on right
-                                    return {
-                                        click: idx+1,
-                                        flag: [idx+1-10, idx+1+10]
-                                    }
-                                }
-                        else continue;
-                    }
-                }
-            }
-            return undefined;
-        }
-
-        const bestHardMove = () => {
-            // implement medium rules except rand fallback, awaiting hunter and ayna.
-            let bestMove = bestMediumMoveNonRandom(); // doesn't exist yet
-
-            if (!bestMove) {
-                const next121 = find121();
-                if (next121) {
-                    // TODO: handle flagging
-
-                    bestMove = next121.click;
-                }
-            }
-
-            if (!bestMove) {
-                bestMove = bestEasyMove();
-            }
-
-            return bestMove;
-        }
-
         const bestCheatingMove = () => {
-            for (const [idx, val] of minefield) { // groovy es6 syntax
-                if (val !== "*" && !getBtn(idx).disabled) return idx;
+            for (const [idx, val] of minefield.entries()) { // groovy es6 syntax
+                const val = minefield[idx];
+                if (val !== "*" && !getBtn(idx).disabled) {
+                    return {
+                        click: idx,
+                        flag: bestMediumMove().flag
+                    };
+                }
             }
             return undefined;
         }
+
+        const bestHardMove = bestCheatingMove;
+
+        const aiMakesMove = async (move) => {
+            const secondsBeforeMove = 2;
+            await sleep(secondsBeforeMove * 1000);
+            aiPlaceFlags(move.files);
+            await sleep (1000);
+            reveal(getBtn(move.click));
+        }
+
+        const aiPlayAlone = async (bestMoveFn) => {
+            
+        }
+
     </script>
 </body>
 
