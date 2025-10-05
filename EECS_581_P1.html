@@ -72,9 +72,12 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
     <label for ="gameMode">Game Mode: </label>
     <select id="gameMode">
         <option value="single">Classic Single Player</option>
-        <option value="easy">Easy AI</option>
-        <option value="medium">Medium AI</option>
-        <option value="hard">Hard AI</option>
+        <option value="easy">Easy AI Versus</option>
+        <option value="medium">Medium AI Versus</option>
+        <option value="hard">Hard AI Versus</option>
+        <option value="easy-auto">Easy AI Autoplay</option>
+        <option value="medium-auto">Medium AI Autoplay</option>
+        <option value="hard-auto">Hard AI Autoplay</option>
     </select>
 
     <p>Controls: left click tile to reveal, press f while hovering over tile to flag it</p>
@@ -90,8 +93,6 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         <div id="overlay" class="grid"></div>
     </div>
     <script>
-        "use strict";
-
         let NUM_MINES; // change this to the result of the input form
         let flag_count; // equal to number of mines to start
         let revealed_count; // number of revealed tiles
@@ -101,6 +102,8 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         let game_in_progress = false;
         let board_initialized = false;
         let game_mode;
+        let autoPlay;
+        let bestMoveFn;
 
         //get access to the start game button
         var start_game_button = document.getElementById("start_game_button");
@@ -157,7 +160,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 tempButton.className = "tile-style";
 
                 // add left-click event handler to the button
-                tempButton.addEventListener("click", left_click);
+                if (!autoPlay) enableClickListener(tempButton);
 
                 // f-key event listener needs to know whether or not mouse is hovering over
                 // button.
@@ -218,7 +221,13 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 NUM_MINES = document.getElementById("mineCount").value;
                 flag_count = NUM_MINES;
                 revealed_count = 0;
-                game_mode = document.getElementById("gameMode"); // set game mode variable
+                game_mode = document.getElementById("gameMode").value; // set game mode variable
+                autoPlay = game_mode.includes("auto");
+                if (game_mode !== "single") {
+                    if (game_mode.includes("easy")) bestMoveFn = bestEasyMove;
+                    else if (game_mode.includes("medium")) bestMoveFn = bestMediumMove;
+                    else if (game_mode.includes("hard")) bestMoveFn = bestHardMove;
+                }
 
                 //get the settings paragraph
                 var game_status = document.getElementById("game_status");
@@ -232,16 +241,32 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 generate_game_grid();
                 game_in_progress = true;
 
+                if (autoPlay) {
+                    aiPlayAlone();
+                }
+                else if (game_mode !== "single") {
+                    aiTakeTurns() // ? depends on how marco wishes to implement.
+                }
+
             } else {
                 alert("Game Is In Progress!")
             }
 
         }
 
-        function left_click() {
-            // "this" refers to the HTML element that called this function
-            console.log(this.id);
-            const id = parseInt(this.id);
+        function left_click(passedBtnIdx) {
+            let id;
+            let btn;
+            if (typeof(passedBtnIdx) === "object") {
+                btn = passedBtnIdx.target;
+                id = parseInt(btn.id);
+            }
+            else {
+                id = passedBtnIdx;
+                btn = getBtn(id);
+            }
+
+            console.log(btn);
 
             // ignore if game is not active
             if (!game_in_progress) {
@@ -255,11 +280,11 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             }
 
             // we can disable buttons once their number is revealed, so this is all we need to check
-            if (!this.is_flagged) {
+            if (!btn.is_flagged) {
                 if (minefield[id] == "*") {
                     gameOver();
                 }
-                reveal(this);
+                reveal(btn);
             }
 
             // check for victory
@@ -269,6 +294,12 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 board_initialized = false;
                 document.getElementById("start_game_button").innerText = "New Game?";
                 document.getElementById("game_status").innerText = "Game Over: Victory!";
+            }
+
+            else if (game_mode !== "single") { // if game not over
+                for (let idx = 0; idx < minefield.length; idx++) {
+                    disableClickListener(getBtn(idx));
+                }
             }
 
         }
@@ -445,31 +476,25 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         }
 
         // UNLESS NESSECARY NEW CODE BELOW THIS LINE
-        const sleep = (ms) => new Promise(reslove => setTimeout(reslove, ms));
+        const enableClickListener = btn => btn.addEventListener("click", left_click);
+        const disableClickListener = btn => btn.removeEventListener("click", left_click);
 
         const xyToIdx = xyObj => xyObj.y * 10 + xyObj.x;
-
         const idxToXY = idx => {
             return {
                 x: idx % 10,
                 y: idx / 10
             };
         }
-
         const getBtn = idx => document.getElementById(idx.toString());
 
         const bestEasyMove = () => {
             // TODO: Anya - implement.
-            for (const [idx, val] of minefield.entries()) { // groovy es6 syntax
-                const val = minefield[idx];
-                if (!getBtn(idx).disabled) {
-                    return {
-                        click: idx,
-                        flag: []
-                    };
-                }
+            let bestMove = {
+                click: 0,
+                flag: []
             }
-            return undefined;
+            return bestMove;
         }
 
         const bestMediumMoveNonRandom = () => {
@@ -490,7 +515,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 let buttonsToFlag = [];
                 
                 // Check if each neighbor is even in the grid; if so, check if neighbor is hidden, and increment neighborCount and push neighbor to buttonsToFlag if so
-                for (let i = 0; i < neighbors.length(); i++) {
+                for (let i = 0; i < neighbors.length; i++) {
                     if (neighbors[i] >= 0 && neighbors[i] < minefield.length) {
                         if (!getBtn(neighbors[i]).disabled) {
                             neighborCount++;
@@ -510,7 +535,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                     let flaggedNeighborCount = 0;
                     let buttonsToReveal = [];
 
-                    for (let i = 0; i < neighbors.length(); i++) {
+                    for (let i = 0; i < neighbors.length; i++) {
                         if (neighbors[i] >= 0 && neighbors[i] < minefield.length) {
                             if (getBtn(neighbors[i]).is_flagged) {
                                 flaggedNeighborCount++;
@@ -534,46 +559,55 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         }
 
         const bestMediumMove = () => {
+            // Check if a best move was found outside of random guess
             let bestMove = bestMediumMoveNonRandom();
 
+            // If not, use a random guess.
             if (!bestMove) {
-                bestMove = bestEasyMove(); // random
+                bestMove = bestEasyMove();
+            }
+            if (!bestMove.click) {
+                bestMove.click = bestEasyMove().click;
             }
 
             return bestMove;
         }
 
-        const bestCheatingMove = () => {
-            for (const [idx, val] of minefield.entries()) { // groovy es6 syntax
-                const val = minefield[idx];
-                if (val !== "*" && !getBtn(idx).disabled) {
-                    return {
-                        click: idx,
-                        flag: bestMediumMove().flag
-                    };
-                }
+        const bestHardMove = () => {
+            // if the board hasn't been initalized, choose a tile at
+            if (!board_initialized) return bestEasyMove();
+            // Make a subarray of the indicies that neither contain a mine or are clicked
+            const goodMoves = Array.from(minefield.keys().filter(k => minefield[k] !== "*" && !getBtn(k).disabled));
+            // If the array is not empty, return one of the indicies at random
+            return (goodMoves.length > 0) ? 
+            {
+                click: goodMoves[Math.floor(Math.random() * goodMoves.length)], 
+                flag: bestMediumMove().flag,
             }
-            return undefined;
+            : bestMediumMove();
         }
 
-        const bestHardMove = bestCheatingMove;
+        // https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep
+        const sleep = (ms) => {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
 
+        // The AI makes a single passed move on the board.
         const aiMakesMove = async (move) => {
-            const secondsBeforeMove = 2;
-            await sleep(secondsBeforeMove * 1000);
-            aiPlaceFlags(move.files);
-            await sleep (1000);
-            reveal(getBtn(move.click));
+            console.log("move", move);
+            await sleep(1000);
+            // aiPlaceFlags(move.tiles); //TODO: Implement - Hunter
+            await sleep(500);
+            left_click(move.click);
         }
 
-        const aiPlayAlone = async (bestMoveFn) => {
-            
+        // call to have the ai start playing alone
+        const aiPlayAlone = async () => {
+            while (game_in_progress) {
+                await aiMakesMove(bestMoveFn());
+            }
         }
 
     </script>
 </body>
-
-
 </html>
-
-
