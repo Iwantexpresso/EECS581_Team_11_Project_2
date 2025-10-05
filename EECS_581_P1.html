@@ -326,15 +326,28 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             // check for victory
             console.log('checking for victory:', revealed_count, 100 - NUM_MINES);
             if (revealed_count == 100 - NUM_MINES) {
-                //const sound = new Audio('soundFiles/win.mov');
-                //sound.play();
-                const sound = new Audio('soundFiles/asmr.m4a');
-                sound.play();
-                game_in_progress = false;
-                board_initialized = false;
-                document.getElementById("start_game_button").innerText = "New Game?";
-                document.getElementById("game_status").innerText = "Game Over: Victory!";
-                activateVictoryMode();
+                // Verify all mines are flagged
+                let correctFlags = 0;
+                for (let i = 0; i < minefield.length; i++) {
+                    if (minefield[i] === '*' && getBtn(i).is_flagged) {
+                        correctFlags++;
+                    }
+                }
+                if (correctFlags === Number(NUM_MINES)) {
+                    console.log("All mines correctly flagged!");
+                    const sound = new Audio('soundFiles/asmr.m4a');
+                    sound.play();
+                    game_in_progress = false;
+                    board_initialized = false;
+                    document.getElementById("start_game_button").innerText = "New Game?";
+                    document.getElementById("game_status").innerText = "Game Over: Victory!";
+                    activateVictoryMode();
+
+                }
+                else {
+                    alert("You have revealed all safe tiles, but not all mines are flagged correctly. Keep trying!");
+                }
+                
             }
 
             else if (game_mode !== "single") { // if game not over
