@@ -246,12 +246,14 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 NUM_MINES = document.getElementById("mineCount").value;
                 flag_count = NUM_MINES;
                 revealed_count = 0;
+                // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
                 game_mode = document.getElementById("gameMode").value; // set game mode variable
                 difficulty = document.getElementById("difficulty").value;
                 autoPlay = game_mode === "auto";
                 if (difficulty === "easy") bestMoveFn = bestEasyMove;
                 else if (difficulty === "medium") bestMoveFn = bestMediumMove;
                 else if (difficulty === "hard") bestMoveFn = bestHardMove;
+                // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
 
                 //get the settings paragraph
                 var game_status = document.getElementById("game_status");
