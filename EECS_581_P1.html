@@ -280,6 +280,22 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
 
         }
 
+        function aiPlaceFlags(flagIndices) {
+            flagIndices.forEach((index) => {
+                let btn = getBtn(index);
+                if (!btn.is_flagged && !btn.disabled && flag_count > 0) { // flag
+                    console.log('AI flagging now at index', index);
+                    flag_count--;
+                    btn.innerHTML = "FLAG";
+                    btn.style.color = "#008CBA";
+                    flag_counter.innerText = `${flag_count} flags/mines left`;
+                    flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
+
+                    btn.is_flagged = !btn.is_flagged;
+                }
+            });
+        }
+
         function left_click(passedBtnIdx) {
             let id;
             let btn;
@@ -552,18 +568,36 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         }
         const getBtn = idx => document.getElementById(idx.toString());
 
+        function getNeighbors(idx) {
+            let neighbors = [idx-1-10, idx-0-10, idx+1-10, idx-1-0, idx+1-0, idx-1+10, idx-0+10, idx+1+10];
+            if (idx % 10 == 0) { // left edge
+                neighbors = neighbors.filter((n) => n % 10 != 9);
+            }
+            else if (idx % 10 == 9) { // right edge
+                neighbors = neighbors.filter((n) => n % 10 != 0);
+            }
+
+            neighbors = neighbors.filter(n => n >= 0 && n < minefield.length);
+            
+            return neighbors;
+        }
+
         const bestEasyMove = () => {
             // TODO: Anya - implement.
             let bestMove = {
-                click: 0,
+                click: [Math.floor(Math.random() * minefield.length)],
                 flag: []
             }
             return bestMove;
         }
 
         const bestMediumMoveNonRandom = () => {
+            console.log("Calculating best medium move...");
             let bestMove;
+            let goodMoves = [];
+
             for (let idx = 0; idx < minefield.length; idx++) {
+                console.log("Checking index for flagging:", idx);
                 // If tile is hidden, move on
                 if (!getBtn(idx).disabled) continue;
 
@@ -572,52 +606,76 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 let value = minefield[idx];
 
                 // Array of all possible neighbors
-                let neighbors = [idx-1-10, idx-0-10, idx+1-10, idx-1-0, idx+1-0, idx-1+10, idx-0+10, idx+1+10];
+                let neighbors = getNeighbors(idx);
 
                 //Array of buttons to flag, if needed later
                 let buttonsToFlag = [];
                 
                 // Check if each neighbor is even in the grid; if so, check if neighbor is hidden, and increment neighborCount and push neighbor to buttonsToFlag if so
                 for (let i = 0; i < neighbors.length; i++) {
-                    if (neighbors[i] >= 0 && neighbors[i] < minefield.length) {
-                        if (!getBtn(neighbors[i]).disabled) {
-                            neighborCount++;
-                            buttonsToFlag.push(neighbors[i]);
-                        };
-                    }
+                    if (!getBtn(neighbors[i]).disabled) {
+                        neighborCount++;
+                    };
                 }
 
                 // If no. of hidden neighbors = number of cell, best move is to flag all neighbors
-                if (neighborCount == value) {
-                    bestMove = {
-                        flag: buttonsToFlag,
-                        click: undefined
-                    };
-                    break;
-                } else {
-                    let flaggedNeighborCount = 0;
-                    let buttonsToReveal = [];
-
+                if (neighborCount == value && neighborCount > 0) {
                     for (let i = 0; i < neighbors.length; i++) {
-                        if (neighbors[i] >= 0 && neighbors[i] < minefield.length) {
-                            if (getBtn(neighbors[i]).is_flagged) {
-                                flaggedNeighborCount++;
-                            } else buttonsToFlag.push(neighbors[i]);;
+                        if (!getBtn(neighbors[i]).disabled && !getBtn(neighbors[i]).is_flagged) {
+                            buttonsToFlag.push(neighbors[i]);
+                        };
+                    }
+                    
+                    if (buttonsToFlag.length > 0) {
+                        bestMove = {
+                            flag: buttonsToFlag,
+                            click: undefined
+                        };
+                        console.log("Best medium move found (flagging):", bestMove);
+                        return bestMove;
+                    }
+                }
+                
+            }
+
+            for (let idx = 0; idx < minefield.length; idx++) {  
+                console.log("Checking index for clicking:", idx);
+
+                if (!getBtn(idx).disabled) continue;
+
+                let value = minefield[idx];
+                let neighbors = getNeighbors(idx);
+
+                let buttonsToClick = [];
+                let flaggedNeighbors = 0;
+
+                for (let i = 0; i < neighbors.length; i++) {
+                    if (!getBtn(neighbors[i]).disabled) {
+                        if (getBtn(neighbors[i]).is_flagged) {
+                            flaggedNeighbors++;
+                        }
+                        else {
+                            buttonsToClick.push(neighbors[i]);
                         }
                     }
+                }
 
-                    if (flaggedNeighborCount == value) {
-                        const randomIndex = Math.floor(Math.random() * buttonsToReveal.length);
-                        bestMove = {
-                            flag: [],
-                            click: buttonsToReveal[randomIndex]
-                        };
-                        break;
-                    } else {
-                        continue;
-                    }
-                }; // If not, then move to next cell and repeat
+                console.log("Flagged neighbors:", flaggedNeighbors, "Value:", value, "Buttons to click:", buttonsToClick);
 
+                if (flaggedNeighbors == value && buttonsToClick.length > 0) {
+                    bestMove = {
+                        flag: [],
+                        click: buttonsToClick
+                    };
+                    console.log("Best medium move found (clicking):", bestMove);
+                    return bestMove;
+                }
+            }; // If not, then move to next cell and repeat
+
+
+            if (bestMove === undefined) {
+                console.log("No best medium move found.");
+                return bestEasyMove();
             }
         }
 
@@ -626,12 +684,12 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             let bestMove = bestMediumMoveNonRandom();
 
             // If not, use a random guess.
-            if (!bestMove) {
-                bestMove = bestEasyMove();
-            }
-            if (!bestMove.click) {
-                bestMove.click = bestEasyMove().click;
-            }
+            // if (!bestMove) {
+            //     bestMove = bestEasyMove();
+            // }
+            // if (!bestMove.click) {
+            //     bestMove.click = bestEasyMove().click;
+            // }
 
             return bestMove;
         }
@@ -659,15 +717,28 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         const aiMakesMove = async (move) => {
             console.log("move", move);
             await sleep(1000);
-            // aiPlaceFlags(move.tiles); //TODO: Implement - Hunter
+            if (move.flag.length > 0) {
+                console.log("aiMakesMove(): placing flags:", move.flag);
+                aiPlaceFlags(move.flag); //TODO: Implement - Hunter
+                console.log("flags placed:", move.flag);
+            }
             await sleep(500);
-            left_click(move.click);
+            if (move.click !== undefined) {
+                console.log("aiMakesMove(): clicking:", move.click);
+                for (let idx of move.click) {
+                    if (getBtn(move.click[idx]).disabled) continue; // skip if already revealed
+                    left_click(idx);
+                    await sleep(250);
+                }
+            }
         }
 
         // call to have the ai start playing alone
         const aiPlayAlone = async () => {
             while (game_in_progress) {
-                await aiMakesMove(bestMoveFn());
+                newMove = bestMoveFn();
+                console.log(`${bestMoveFn} selected move:`, newMove);
+                await aiMakesMove(newMove);
             }
         }
 
