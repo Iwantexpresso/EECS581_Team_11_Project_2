@@ -463,8 +463,15 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
 
         const bestEasyMove = () => {
             // TODO: Anya - implement.
-            let bestMove;
-            return bestMove;
+            let bestMove = Math.floor(Math.random() * 100);
+
+            // have a while loop that checks if the bestMove is already disabled or not.
+            
+
+            return {
+                click: bestMove,
+                flag: underfined
+            };
         }
 
         const bestMediumMoveNonRandom = () => {
