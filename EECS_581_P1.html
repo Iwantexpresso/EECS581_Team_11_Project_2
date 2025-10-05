@@ -524,23 +524,26 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
 
         const bestEasyMove = () => {
             // TODO: Anya - implement.
-<<<<<<< HEAD
-            let bestMove = Math.floor(Math.random() * 100);
 
-            // have a while loop that checks if the bestMove is already disabled or not.
-            
+            // need to create a while loop that picks a random tile and checks if the button is disabled or flagged.
+            // it keeps looking for a cell to pick until it finds a free one.
+            let free = false;
+            while (free) {
+                let maybeClick = Math.floor(Math.random() * 100);
+                if (getBtn(maybeClick).disabled || getBtn(maybeClick).is_flagged) {
+                    console.log("can't click that");
+                    continue;
+                } else {
+                    console.log("free space found!");
+                    free = false;
+                }
+            }
 
-            return {
-                click: bestMove,
-                flag: underfined
-            };
-=======
             let bestMove = {
                 click: 0,
                 flag: []
             }
             return bestMove;
->>>>>>> main
         }
 
         const bestMediumMoveNonRandom = () => {
