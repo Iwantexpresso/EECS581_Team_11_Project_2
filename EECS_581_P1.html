@@ -209,7 +209,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             }
             let button = document.elementFromPoint(mouse_x, mouse_y);
             if (button.is_hovering && event.key === "f") {
-                const sound = new Audio('soundFiles/flag.mov');
+                const sound = new Audio('soundFiles/flag.mov'); // PROJECT 2 ADDITION -------------------------------------------
                 sound.play();
                 sound.volume = 0.2;
                 console.log('flag key:', !button.is_flagged, !button.disabled, flag_count > 0);
@@ -312,14 +312,18 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             // we can disable buttons once their number is revealed, so this is all we need to check
             if (!btn.is_flagged) {
                 if (minefield[id] == "*") {
+                    // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
                     const sound = new Audio('soundFiles/lose.mov');
                     sound.play();
                     sound.volume = 0.5;
+                    // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
                     gameOver();
                 }
+                // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
                 const sound = new Audio('soundFiles/safe.mov');
                 sound.play();
                 sound.volume = 0.2;
+                // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
                 reveal(btn);
             }
 
