@@ -1,11 +1,22 @@
 <!--
 NAME: EECS_581_P1.html
 Description: HTML file with JavaScript that plays Minesweeper
-Authors: Daniel Butler, Charley Findling, Skylar Franz, Jack Gerety, Beckett Malinowski, Addison Bartelli, Elizabeth Miller, Marco Martinez, Anya Combs, Janna Duango, Hunter Long
+Authors: Daniel Butler, Charley Findling, Skylar Franz, Jack Gerety, Beckett Malinowski
 External Source: https://javascript.info/task/shuffle - for Array Shuffle function, https://stackoverflow.com/questions/26793247/how-to-overlay-a-div-over-a-canvas-css - for overlaying div on canvas, https://stackoverflow.com/questions/61911084/how-to-create-a-grid-container-of-buttons-by-using-for-in-javascript - for grid styling of button generator
 Creation Date: 09/02/2025
 Inputs: User clicks: Number of mines selection, Game Start button, Canvas tile elements (minefield), F KEY: Flag mines
 Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
+-->
+
+<!--
+Project 2 
+Name: EECS_581_P1.html
+Description: HTML file with JavaScript that has three modes of Minesweeper: Single player, Interactive AI, and Automatic AI. The AI has three difficulties: Easy, Medium, Hard
+Authors: Addison Bartelli, Elizabeth Miller, Marco Martinez, Anya Combs, Janna Dungao, Hunter Long
+External Source:
+Creation date: 09/24/25
+Inputs: User clicks: Number of mines selection, Game mode selection, (if AI mode) AI difficulty, Canvas tile elements (minefield), F key: Flag mines
+Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects for: mine reveal, flag placement/removal, game over, game won
 -->
 
 <!doctype html>
@@ -104,6 +115,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         <div id="overlay" class="grid"></div>
     </div>
     <script>
+        "use strict";
         let NUM_MINES; // change this to the result of the input form
         let flag_count; // equal to number of mines to start
         let revealed_count; // number of revealed tiles
@@ -205,6 +217,9 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             }
             let button = document.elementFromPoint(mouse_x, mouse_y);
             if (button.is_hovering && event.key === "f") {
+                const sound = new Audio('soundFiles/flag.mov'); // PROJECT 2 ADDITION -------------------------------------------
+                sound.play();
+                sound.volume = 0.2;
                 console.log('flag key:', !button.is_flagged, !button.disabled, flag_count > 0);
                 if (!button.is_flagged && !button.disabled && flag_count > 0) { // flag
                     console.log('flagging now');
@@ -243,12 +258,14 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 NUM_MINES = document.getElementById("mineCount").value;
                 flag_count = NUM_MINES;
                 revealed_count = 0;
+                // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
                 game_mode = document.getElementById("gameMode").value; // set game mode variable
                 difficulty = document.getElementById("difficulty").value;
                 autoPlay = game_mode === "auto";
                 if (difficulty === "easy") bestMoveFn = bestEasyMove;
                 else if (difficulty === "medium") bestMoveFn = bestMediumMove;
                 else if (difficulty === "hard") bestMoveFn = bestHardMove;
+                // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
 
                 //get the settings paragraph
                 var game_status = document.getElementById("game_status");
@@ -305,19 +322,46 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             // we can disable buttons once their number is revealed, so this is all we need to check
             if (!btn.is_flagged) {
                 if (minefield[id] == "*") {
+                    // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
+                    const sound = new Audio('soundFiles/lose.mov');
+                    sound.play();
+                    sound.volume = 0.5;
+                    // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
                     gameOver();
                 }
+                // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
+                const sound = new Audio('soundFiles/safe.mov');
+                sound.play();
+                sound.volume = 0.2;
+                // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
                 reveal(btn);
             }
 
             // check for victory
             console.log('checking for victory:', revealed_count, 100 - NUM_MINES);
             if (revealed_count == 100 - NUM_MINES) {
-                game_in_progress = false;
-                board_initialized = false;
-                document.getElementById("start_game_button").innerText = "New Game?";
-                document.getElementById("game_status").innerText = "Game Over: Victory!";
-                return; // Exit early on victory
+                // Verify all mines are flagged
+                let correctFlags = 0;
+                for (let i = 0; i < minefield.length; i++) {
+                    if (minefield[i] === '*' && getBtn(i).is_flagged) {
+                        correctFlags++;
+                    }
+                }
+                if (correctFlags === Number(NUM_MINES)) {
+                    console.log("All mines correctly flagged!");
+                    const sound = new Audio('soundFiles/asmr.m4a');
+                    sound.play();
+                    game_in_progress = false;
+                    board_initialized = false;
+                    document.getElementById("start_game_button").innerText = "New Game?";
+                    document.getElementById("game_status").innerText = "Game Over: Victory!";
+                    activateVictoryMode();
+
+                }
+                else {
+                    alert("You have revealed all safe tiles, but not all mines are flagged correctly. Keep trying!");
+                }
+                
             }
 
 //--------------------Team 11 Changes------------------
@@ -570,10 +614,22 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
 
         const bestEasyMove = () => {
             // TODO: Anya - implement.
+            console.log("easy move fn entered");
+            // need to create a while loop that picks a random tile and checks if the button is disabled or flagged.
+            // it keeps looking for a cell to pick until it finds a free one.
+            let maybeClick = Math.floor(Math.random() * 100);
+            while(getBtn(maybeClick).disabled || getBtn(maybeClick).is_flagged) {
+                console.log("still in while");
+                maybeClick = Math.floor(Math.random() * 100);
+            }
+
+            console.log("while exited");
+
             let bestMove = {
-                click: 0,
+                click: maybeClick,
                 flag: []
             }
+            console.log("easy move fn exiting");
             return bestMove;
         }
 
@@ -727,6 +783,10 @@ const aiCLHighlight = () => {
                 delete aiHighlight._idx;
             }
         };
+        function activateVictoryMode() {
+            const sound = new Audio('soundFiles/coursepolicyreading.m4a');
+            sound.play();
+        }
     </script>
 </body>
 </html>
