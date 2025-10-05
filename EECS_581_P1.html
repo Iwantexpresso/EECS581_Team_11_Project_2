@@ -324,11 +324,28 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             document.getElementById("start_game_button").innerText = "New Game?";
             document.getElementById("game_status").innerText = "Game Over: Defeat";
             // reveal all bombs
+            let bombIndices = [];
             for (let i = 0; i < 100; i++) {
-                if (minefield[i] == '*') {
-                    reveal(document.getElementById(i));
+                if (minefield[i] === '*') {
+                   bombIndices.push(i);
                 }
             }
+            let delay = 0;
+            bombIndices.forEach((index) => {
+                let btn = document.getElementById(index);
+                btn.style.backgroundImage = "none";
+                setTimeout(() => {
+                     setTimeout(() => {
+                        btn.style.backgroundImage = "url('explosion.png')";
+                    }, 700);
+
+                    btn.style.backgroundImage = "url('bomb.png')";
+                   
+                    btn.style.backgroundSize = "cover";
+                    btn.disabled = true;
+                }, delay);
+                delay += 200; // increase delay for next bomb
+            });
         }
 
         //helper function for BFS
