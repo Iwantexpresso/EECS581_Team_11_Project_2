@@ -45,6 +45,13 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             font-weight: bold;
             font-size: 20px;
         }
+/* ------------TEAM 11 CHANGES------------------ */
+        /* AI planned move highlight */
+        .ai-planned {
+            background-color: yellow !important;
+            box-shadow: 0 0 8px 2px rgba(255,200,0,0.6) inset;
+        }
+/* END TEAM 11 CHANGES ------------------ */
     </style>
 </head>
 
@@ -109,6 +116,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         let difficulty;
         let autoPlay;
         let bestMoveFn;
+        let currentTurn = 'player'; // 'player' or 'ai'\
 
         //get access to the start game button
         var start_game_button = document.getElementById("start_game_button");
@@ -257,9 +265,6 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 if (autoPlay) {
                     aiPlayAlone();
                 }
-                else if (game_mode !== "single") {
-                    aiTakeTurns() // ? depends on how marco wishes to implement.
-                }
 
             } else {
                 alert("Game Is In Progress!")
@@ -280,11 +285,16 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             }
 
             console.log(btn);
-
             // ignore if game is not active
             if (!game_in_progress) {
                 return;
             }
+            //----------TEAM 11 CHANGES------------------
+            // allows the ai clicks when user clicks are disabled
+            if (game_mode === "interactive" && currentTurn !== 'player' && typeof(passedBtnIdx) === "object") {
+                return; 
+            }
+            // end of team 11 changes
 
             // generate the mine positions only after the first click
             if (!board_initialized) {
@@ -307,8 +317,25 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 board_initialized = false;
                 document.getElementById("start_game_button").innerText = "New Game?";
                 document.getElementById("game_status").innerText = "Game Over: Victory!";
+                return; // Exit early on victory
             }
 
+//--------------------Team 11 Changes------------------
+            // handle turn switching for interactive mode
+            if (game_mode === "interactive" && game_in_progress) {
+                currentTurn = 'ai'; 
+                // disable clicks for player while it is ai's turn
+                for (let idx = 0; idx < minefield.length; idx++) {
+                    disableClickListener(getBtn(idx));
+                }
+                // trigger ai turn after short delay
+                setTimeout(() => {
+                    if (game_in_progress && currentTurn === 'ai') {
+                        performAiTurn();
+                    }
+                }, 100);
+            }
+            // end of team 11 changes
             else if (game_mode !== "single") { // if game not over
                 for (let idx = 0; idx < minefield.length; idx++) {
                     disableClickListener(getBtn(idx));
@@ -316,8 +343,9 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             }
 
         }
-
-        function gameOver() {
+        // NEW CODE TEAM 11- MODIFIED FOR GAME OVER ANIMATION------------------------------------
+        // shows all bombs and explosion animation when a mine is clicked
+            function gameOver() {
             console.log("You lose :(");
             game_in_progress = false;
             board_initialized = false;
@@ -347,6 +375,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
                 delay += 200; // increase delay for next bomb
             });
         }
+        // end of team 11 changes
 
         //helper function for BFS
         function idx(r, c) { return r * 10 + c; }
@@ -526,7 +555,7 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             }
         }
 
-        // UNLESS NESSECARY NEW CODE BELOW THIS LINE
+        // UNLESS NESSECARY NEW CODE BELOW THIS LINE ----------------------------------------------------
         const enableClickListener = btn => btn.addEventListener("click", left_click);
         const disableClickListener = btn => btn.removeEventListener("click", left_click);
 
@@ -645,9 +674,13 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
         // The AI makes a single passed move on the board.
         const aiMakesMove = async (move) => {
             console.log("move", move);
+            // highligh tile to be clicked
+            if (move && typeof move.click !== 'undefined') aiHighlight(move.click);
             await sleep(1000);
             // aiPlaceFlags(move.tiles); //TODO: Implement - Hunter
             await sleep(500);
+            // clear highlight and make the click
+            aiCLHighlight();
             left_click(move.click);
         }
 
@@ -658,6 +691,42 @@ Outputs: Minefield tile reveal: Number of mines/mine, Add FLAG to tile
             }
         }
 
+    // Perform AI turn using existing aiMakesMove function
+    const performAiTurn = async () => {
+        if (!game_in_progress || currentTurn !== 'ai') return;
+        
+        let move = bestMoveFn();
+        if (!move || typeof move.click === 'undefined') {
+            move = bestEasyMove();
+            move.flag = move.flag || [];
+        }
+        
+        // Use existing aiMakesMove function
+        await aiMakesMove(move);
+        
+        if (game_in_progress) {
+            currentTurn = 'player'; // Hand turn back to player
+            // Re-enable clicks for player
+            for (let i = 0; i < minefield.length; i++) {
+                enableClickListener(getBtn(i));
+            }
+        }
+    }
+
+const aiHighlight = (idx) => {
+            aiCLHighlight();
+            const btn = getBtn(idx);
+            if (btn) btn.classList.add('ai-planned');
+
+            aiHighlight._idx = idx;
+        };
+const aiCLHighlight = () => {
+            if (typeof aiHighlight._idx !== 'undefined') {
+                const prev = getBtn(aiHighlight._idx);
+                if (prev) prev.classList.remove('ai-planned');
+                delete aiHighlight._idx;
+            }
+        };
     </script>
 </body>
 </html>
