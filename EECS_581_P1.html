@@ -19,10 +19,13 @@ Inputs: User clicks: Number of mines selection, Game mode selection, (if AI mode
 Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects for: mine reveal, flag placement/removal, game over, game won
 -->
 
-<!doctype html>
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Minesweeper - Team 11 Project 2</title>
     <style>
         /*CSS STYLING CODE FOR OVERLAY POSITIONING AND CREATING GRID SHAPE COMES FROM STACK OVERFLOW AND IS ALTERED TO FIT THIS PROGRAM*/
         /*Element with id="container" will follow the regular positioning flow of the html document*/
@@ -56,11 +59,24 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             font-weight: bold;
             font-size: 20px;
         }
+
+        /*BEGIN PROJECT 2*/
+        noscript * {
+            color: red;
+        }
+
+        :root {
+            font-family: Verdana, sans-serif;
+        }
+        /*END PROJECT 2*/
     </style>
 </head>
 
 <body>
     <h1>MINESWEEPER</h1>
+    <noscript>
+        <h2>This page requires JavaScript. Most likely your browser or an extenstion is blocking JavaScript access to this site.</h2>
+    </noscript>
     <!--Pre-Game start-up menu/info-->
     <button id="start_game_button">Start Game</button>
     <br><br>
