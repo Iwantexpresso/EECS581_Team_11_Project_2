@@ -13,16 +13,19 @@ Project 2
 Name: EECS_581_P1.html
 Description: HTML file with JavaScript that has three modes of Minesweeper: Single player, Interactive AI, and Automatic AI. The AI has three difficulties: Easy, Medium, Hard
 Authors: Addison Bartelli, Elizabeth Miller, Marco Martinez, Anya Combs, Janna Dungao, Hunter Long
-External Source:
+External Source: https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep - for await-based sleep function
 Creation date: 09/24/25
 Inputs: User clicks: Number of mines selection, Game mode selection, (if AI mode) AI difficulty, Canvas tile elements (minefield), F key: Flag mines
 Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects for: mine reveal, flag placement/removal, game over, game won
 -->
 
-<!doctype html>
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Minesweeper - Team 11 Project 2</title>
     <style>
         /*CSS STYLING CODE FOR OVERLAY POSITIONING AND CREATING GRID SHAPE COMES FROM STACK OVERFLOW AND IS ALTERED TO FIT THIS PROGRAM*/
         /*Element with id="container" will follow the regular positioning flow of the html document*/
@@ -56,18 +59,28 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             font-weight: bold;
             font-size: 20px;
         }
-/* ------------TEAM 11 CHANGES------------------ */
+        /* ------------TEAM 11 CHANGES------------------ */
         /* AI planned move highlight */
         .ai-planned {
             background-color: yellow !important;
             box-shadow: 0 0 8px 2px rgba(255,200,0,0.6) inset;
         }
-/* END TEAM 11 CHANGES ------------------ */
+
+        noscript * {
+            color: red;
+        }
+
+        :root {
+            font-family: Verdana, sans-serif;
+        }
+        /* END TEAM 11 CHANGES ------------------ */
     </style>
 </head>
-
 <body>
     <h1>MINESWEEPER</h1>
+    <noscript>
+        <h2>This page requires JavaScript. Most likely your browser or an extenstion is blocking JavaScript access to this site.</h2>
+    </noscript>
     <!--Pre-Game start-up menu/info-->
     <button id="start_game_button">Start Game</button>
     <br><br>
@@ -124,11 +137,13 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         let mouse_y = 0;
         let game_in_progress = false;
         let board_initialized = false;
+        // PROJECT 2 START
         let game_mode;
         let difficulty;
         let autoPlay;
         let bestMoveFn;
         let currentTurn = 'player'; // 'player' or 'ai'\
+        // PROJECT 2 END
 
         //get access to the start game button
         var start_game_button = document.getElementById("start_game_button");
@@ -185,6 +200,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 tempButton.className = "tile-style";
 
                 // add left-click event handler to the button
+                // this line was changed for project 2
                 if (!autoPlay) enableClickListener(tempButton);
 
                 // f-key event listener needs to know whether or not mouse is hovering over
@@ -244,16 +260,6 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         // Apply mine count settings when start button is clicked, and other status indicators
         function apply_settings() {
             if (game_in_progress == false) {
-                // PROJECT 2 START ------------------------------------------------------------------------------------------------------------------
-                // Game mode settings
-                game_mode = document.getElementById("gameMode"); // set game mode element
-                difficulty = document.getElementById("difficulty"); // set difficulty element
-                if (game_mode.value != "single" && difficulty.value == " ") { // validate difficulty chosen if AI mode chosen
-                    alert("Please select the AI difficulty level");
-                    return;
-                }
-                // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
-
                 // Gets number of mines from html mineCount selection
                 NUM_MINES = document.getElementById("mineCount").value;
                 flag_count = NUM_MINES;
@@ -265,10 +271,15 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 if (difficulty === "easy") bestMoveFn = bestEasyMove;
                 else if (difficulty === "medium") bestMoveFn = bestMediumMove;
                 else if (difficulty === "hard") bestMoveFn = bestHardMove;
+
+                if (game_mode.value != "single" && difficulty.value == " ") { // validate difficulty chosen if AI mode chosen
+                    alert("Please select the AI difficulty level");
+                    return;
+                }
                 // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
 
                 //get the settings paragraph
-                var game_status = document.getElementById("game_status");
+                let game_status = document.getElementById("game_status");
 
                 //change the text to show settings to validate that they've been applied
                 console.log(`Game started with ${NUM_MINES} mines`);
@@ -290,6 +301,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         }
 
         function left_click(passedBtnIdx) {
+            // PROJECT 2 START ----------------------------------
             let id;
             let btn;
             if (typeof(passedBtnIdx) === "object") {
@@ -300,8 +312,8 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 id = passedBtnIdx;
                 btn = getBtn(id);
             }
+            // PROJECT 2 END ------------------------------------
 
-            console.log(btn);
             // ignore if game is not active
             if (!game_in_progress) {
                 return;
@@ -366,27 +378,26 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 
             }
 
-//--------------------Team 11 Changes------------------
+            // PROJECT 2 START ---------------------------------------
             // handle turn switching for interactive mode
-            if (game_mode === "interactive" && game_in_progress) {
-                currentTurn = 'ai'; 
+            if (game_mode === "interactive" && game_in_progress && currentTurn === 'player') {
+                currentTurn = "ai";
                 // disable clicks for player while it is ai's turn
                 for (let idx = 0; idx < minefield.length; idx++) {
                     disableClickListener(getBtn(idx));
                 }
                 // trigger ai turn after short delay
-                setTimeout(() => {
-                    if (game_in_progress && currentTurn === 'ai') {
-                        performAiTurn();
-                    }
-                }, 100);
+                if (game_in_progress) {
+                    performAiTurn();
+                }
             }
-            // end of team 11 changes
-            else if (game_mode !== "single") { // if game not over
+
+            else if (game_mode === "auto") { // if game not over
                 for (let idx = 0; idx < minefield.length; idx++) {
                     disableClickListener(getBtn(idx));
                 }
             }
+            // PROJECT 2 END ----------------------------------------
 
         }
         // NEW CODE TEAM 11- MODIFIED FOR GAME OVER ANIMATION------------------------------------
@@ -628,16 +639,34 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             console.log("while exited");
 
             let bestMove = {
-                click: maybeClick,
+                click: [maybeClick],
                 flag: []
             }
             console.log("easy move fn exiting");
             return bestMove;
         }
 
-        const bestMediumMoveNonRandom = () => {
+        function getNeighbors(idx) {
+            let neighbors = [idx-1-10, idx-0-10, idx+1-10, idx-1-0, idx+1-0, idx-1+10, idx-0+10, idx+1+10];
+            if (idx % 10 == 0) { // left edge
+                neighbors = neighbors.filter((n) => n % 10 != 9);
+            }
+            else if (idx % 10 == 9) { // right edge
+                neighbors = neighbors.filter((n) => n % 10 != 0);
+            }
+
+            neighbors = neighbors.filter(n => n >= 0 && n < minefield.length);
+            
+            return neighbors;
+        }
+
+        const bestMediumMove = () => {
+            console.log("Calculating best medium move...");
             let bestMove;
+            let goodMoves = [];
+
             for (let idx = 0; idx < minefield.length; idx++) {
+                console.log("Checking index for flagging:", idx);
                 // If tile is hidden, move on
                 if (!getBtn(idx).disabled) continue;
 
@@ -646,68 +675,77 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 let value = minefield[idx];
 
                 // Array of all possible neighbors
-                let neighbors = [idx-1-10, idx-0-10, idx+1-10, idx-1-0, idx+1-0, idx-1+10, idx-0+10, idx+1+10];
+                let neighbors = getNeighbors(idx);
 
                 //Array of buttons to flag, if needed later
                 let buttonsToFlag = [];
                 
                 // Check if each neighbor is even in the grid; if so, check if neighbor is hidden, and increment neighborCount and push neighbor to buttonsToFlag if so
                 for (let i = 0; i < neighbors.length; i++) {
-                    if (neighbors[i] >= 0 && neighbors[i] < minefield.length) {
-                        if (!getBtn(neighbors[i]).disabled) {
-                            neighborCount++;
-                            buttonsToFlag.push(neighbors[i]);
-                        };
-                    }
+                    if (!getBtn(neighbors[i]).disabled) {
+                        neighborCount++;
+                    };
                 }
 
                 // If no. of hidden neighbors = number of cell, best move is to flag all neighbors
-                if (neighborCount == value) {
-                    bestMove = {
-                        flag: buttonsToFlag,
-                        click: undefined
-                    };
-                    break;
-                } else {
-                    let flaggedNeighborCount = 0;
-                    let buttonsToReveal = [];
-
+                if (neighborCount == value && neighborCount > 0) {
                     for (let i = 0; i < neighbors.length; i++) {
-                        if (neighbors[i] >= 0 && neighbors[i] < minefield.length) {
-                            if (getBtn(neighbors[i]).is_flagged) {
-                                flaggedNeighborCount++;
-                            } else buttonsToFlag.push(neighbors[i]);;
+                        if (!getBtn(neighbors[i]).disabled && !getBtn(neighbors[i]).is_flagged) {
+                            buttonsToFlag.push(neighbors[i]);
+                        };
+                    }
+                    
+                    if (buttonsToFlag.length > 0) {
+                        bestMove = {
+                            flag: buttonsToFlag,
+                            click: undefined
+                        };
+                        console.log("Best medium move found (flagging):", bestMove);
+                        return bestMove;
+                    }
+                }
+                
+            }
+
+            for (let idx = 0; idx < minefield.length; idx++) {  
+                console.log("Checking index for clicking:", idx);
+
+                if (!getBtn(idx).disabled) continue;
+
+                let value = minefield[idx];
+                let neighbors = getNeighbors(idx);
+
+                let buttonsToClick = [];
+                let flaggedNeighbors = 0;
+
+                for (let i = 0; i < neighbors.length; i++) {
+                    if (!getBtn(neighbors[i]).disabled) {
+                        if (getBtn(neighbors[i]).is_flagged) {
+                            flaggedNeighbors++;
+                        }
+                        else {
+                            buttonsToClick.push(neighbors[i]);
                         }
                     }
+                }
 
-                    if (flaggedNeighborCount == value) {
-                        const randomIndex = Math.floor(Math.random() * buttonsToReveal.length);
-                        bestMove = {
-                            flag: [],
-                            click: buttonsToReveal[randomIndex]
-                        };
-                        break;
-                    } else {
-                        continue;
-                    }
-                }; // If not, then move to next cell and repeat
+                console.log("Flagged neighbors:", flaggedNeighbors, "Value:", value, "Buttons to click:", buttonsToClick);
 
+                if (flaggedNeighbors == value && buttonsToClick.length > 0) {
+                    bestMove = {
+                        flag: [],
+                        click: buttonsToClick
+                    };
+                    console.log("Best medium move found (clicking):", bestMove);
+                    return bestMove;
+                }
+            }; // If not, then move to next cell and repeat
+
+
+            if (bestMove === undefined) {
+                console.log("No best medium move found.");
+                return bestEasyMove();
             }
-        }
-
-        const bestMediumMove = () => {
-            // Check if a best move was found outside of random guess
-            let bestMove = bestMediumMoveNonRandom();
-
-            // If not, use a random guess.
-            if (!bestMove) {
-                bestMove = bestEasyMove();
-            }
-            if (!bestMove.click) {
-                bestMove.click = bestEasyMove().click;
-            }
-
-            return bestMove;
         }
 
         const bestHardMove = () => {
@@ -732,14 +770,26 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         // The AI makes a single passed move on the board.
         const aiMakesMove = async (move) => {
             console.log("move", move);
-            // highligh tile to be clicked
-            if (move && typeof move.click !== 'undefined') aiHighlight(move.click);
             await sleep(1000);
-            // aiPlaceFlags(move.tiles); //TODO: Implement - Hunter
-            await sleep(500);
+             if (move.flag.length > 0) {
+                console.log("aiMakesMove(): placing flags:", move.flag);
+                aiPlaceFlags(move.flag);
+                console.log("flags placed:", move.flag);
+            }
+            await sleep(250);
             // clear highlight and make the click
-            aiCLHighlight();
-            left_click(move.click);
+            if (move.click !== undefined) {
+                console.log("aiMakesMove(): clicking:", move.click);
+                for (let idx of move.click) {
+                    if ((getBtn(idx)).disabled) continue; // skip if already revealed
+                    // highligh tile to be clicked
+                    if (move && typeof move.click !== 'undefined') aiHighlight(move.click);
+                    await sleep(500);
+                    aiCLHighlight();
+                    left_click(idx);
+                    await sleep(250);
+                }
+            }
         }
 
         // call to have the ai start playing alone
@@ -749,42 +799,44 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             }
         }
 
-    // Perform AI turn using existing aiMakesMove function
-    const performAiTurn = async () => {
-        if (!game_in_progress || currentTurn !== 'ai') return;
-        
-        let move = bestMoveFn();
-        if (!move || typeof move.click === 'undefined') {
-            move = bestEasyMove();
-            move.flag = move.flag || [];
-        }
-        
-        // Use existing aiMakesMove function
-        await aiMakesMove(move);
-        
-        if (game_in_progress) {
-            currentTurn = 'player'; // Hand turn back to player
-            // Re-enable clicks for player
-            for (let i = 0; i < minefield.length; i++) {
-                enableClickListener(getBtn(i));
+        // Perform AI turn using existing aiMakesMove function
+        const performAiTurn = async () => {
+            if (!game_in_progress || currentTurn !== 'ai') return;
+            
+            let move = bestMoveFn();
+            if (!move || typeof move.click === 'undefined') {
+                move = bestEasyMove();
+                move.flag = move.flag || [];
+            }
+            
+            // Use existing aiMakesMove function
+            await aiMakesMove(move);
+            
+            if (game_in_progress) {
+                currentTurn = 'player'; // Hand turn back to player
+                // Re-enable clicks for player
+                for (let i = 0; i < minefield.length; i++) {
+                    enableClickListener(getBtn(i));
+                }
             }
         }
-    }
 
-const aiHighlight = (idx) => {
+        const aiHighlight = (idx) => {
             aiCLHighlight();
             const btn = getBtn(idx);
             if (btn) btn.classList.add('ai-planned');
 
             aiHighlight._idx = idx;
         };
-const aiCLHighlight = () => {
+
+        const aiCLHighlight = () => {
             if (typeof aiHighlight._idx !== 'undefined') {
                 const prev = getBtn(aiHighlight._idx);
                 if (prev) prev.classList.remove('ai-planned');
                 delete aiHighlight._idx;
             }
         };
+
         function activateVictoryMode() {
             const sound = new Audio('soundFiles/coursepolicyreading.m4a');
             sound.play();
