@@ -303,22 +303,6 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
 
         }
 
-        function aiPlaceFlags(flagIndices) {
-            flagIndices.forEach((index) => {
-                let btn = getBtn(index);
-                if (!btn.is_flagged && !btn.disabled && flag_count > 0) { // flag
-                    console.log('AI flagging now at index', index);
-                    flag_count--;
-                    btn.innerHTML = "FLAG";
-                    btn.style.color = "#008CBA";
-                    flag_counter.innerText = `${flag_count} flags/mines left`;
-                    flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
-
-                    btn.is_flagged = !btn.is_flagged;
-                }
-            });
-        }
-
         function left_click(passedBtnIdx) {
             // PROJECT 2 START ----------------------------------
             let id;
@@ -813,6 +797,22 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         function activateVictoryMode() {
             const sound = new Audio('soundFiles/coursepolicyreading.m4a');
             sound.play();
+        }
+
+        function aiPlaceFlags(flagIndices) {
+            flagIndices.forEach((index) => {
+                let btn = getBtn(index);
+                if (!btn.is_flagged && !btn.disabled && flag_count > 0) { // flag
+                    console.log('AI flagging now at index', index);
+                    flag_count--;
+                    btn.innerHTML = "FLAG";
+                    btn.style.color = "#008CBA";
+                    flag_counter.innerText = `${flag_count} flags/mines left`;
+                    flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
+
+                    btn.is_flagged = !btn.is_flagged;
+                }
+            });
         }
     </script>
 </body>
