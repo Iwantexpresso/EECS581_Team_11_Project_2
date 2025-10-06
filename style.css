@@ -1,0 +1,47 @@
+/*CSS STYLING CODE FOR OVERLAY POSITIONING AND CREATING GRID SHAPE COMES FROM STACK OVERFLOW AND IS ALTERED TO FIT THIS PROGRAM*/
+        /*Element with id="container" will follow the regular positioning flow of the html document*/
+        #container {
+            position: relative;
+        }
+
+        /*Within an element with id="container", elements with id="canvas" will have an absolute position
+              Elements with id="overlay" (in general) will have an absolute position
+              Absolute position is unaffected by rest of the html doc
+              This allows for the generation of our grid of buttons on top of a canvas element*/
+        #container canvas,
+        #overlay {
+            position: absolute;
+        }
+
+        /*when a canvas is created, it creates a free rectangle with the border without needing to draw it using javascript*/
+        canvas {
+            border: 1px solid black;
+        }
+
+        .grid {
+            /*grid of 10 columns, each being 70 pixels wide*/
+            display: grid;
+            grid-template-columns: 70px 70px 70px 70px 70px 70px 70px 70px 70px 70px;
+        }
+
+        /*Style of Individual buttons*/
+        .tile-style {
+            height: 50px;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        /* ------------TEAM 11 CHANGES------------------ */
+        /* AI planned move highlight */
+        .ai-planned {
+            background-color: yellow !important;
+            box-shadow: 0 0 8px 2px rgba(255,200,0,0.6) inset;
+        }
+
+        noscript * {
+            color: red;
+        }
+
+        :root {
+            font-family: Verdana, sans-serif;
+        }
+        /* END TEAM 11 CHANGES ------------------ */
