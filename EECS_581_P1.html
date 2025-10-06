@@ -117,10 +117,12 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         let mouse_y = 0;
         let game_in_progress = false;
         let board_initialized = false;
+        // PROJECT 2 START -------------
         let game_mode;
         let difficulty;
         let autoPlay;
         let bestMoveFn;
+        // PROJECT 2 END ---------------
 
         //get access to the start game button
         var start_game_button = document.getElementById("start_game_button");
@@ -177,6 +179,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 tempButton.className = "tile-style";
 
                 // add left-click event handler to the button
+                // this line was changed for project 2
                 if (!autoPlay) enableClickListener(tempButton);
 
                 // f-key event listener needs to know whether or not mouse is hovering over
@@ -301,6 +304,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         }
 
         function left_click(passedBtnIdx) {
+            // PROJECT 2 START ----------------------------------
             let id;
             let btn;
             if (typeof(passedBtnIdx) === "object") {
@@ -311,8 +315,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 id = passedBtnIdx;
                 btn = getBtn(id);
             }
-
-            console.log(btn);
+            // PROJECT 2 END ------------------------------------
 
             // ignore if game is not active
             if (!game_in_progress) {
@@ -370,11 +373,13 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 
             }
 
+            // PROJECT 2 START --------------------------------------
             else if (game_mode !== "single") { // if game not over
                 for (let idx = 0; idx < minefield.length; idx++) {
                     disableClickListener(getBtn(idx));
                 }
             }
+            // PROJECT 2 END ----------------------------------------
 
         }
 
