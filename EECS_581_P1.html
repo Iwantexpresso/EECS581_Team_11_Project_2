@@ -181,6 +181,9 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
 
         }
 
+        const victoryAudio = new Audio('soundFiles/coursepolicyreading.m4a');
+        victoryAudio.loop = true; // keeps it looping indefinitely
+
         function generate_game_grid() {
             div.innerHTML = ""; // clear the div. Be careful about this when adding the labels!!
 
@@ -442,8 +445,11 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             console.log(`revealing ${tile.id}`);
 
             // we don't need to click the button anymore, we can disable it
+
+
             tile.disabled = true;
             revealed_count++;
+
 
             // set the text on the button to the number of adjacent mines here, or if its just a mine
             if (minefield[tile.id] != 0) {
@@ -838,8 +844,10 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         };
 
         function activateVictoryMode() {
-            const sound = new Audio('soundFiles/coursepolicyreading.m4a');
-            sound.play();
+            // Only start playing if it isn't already playing
+            if (victoryAudio.paused) {
+                victoryAudio.play();
+            }
         }
 
         function aiPlaceFlags(flagIndices) {
