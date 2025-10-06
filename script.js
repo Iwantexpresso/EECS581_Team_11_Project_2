@@ -8,743 +8,743 @@ Creation date: 09/24/25
 Inputs: User clicks: Number of mines selection, Game mode selection, (if AI mode) AI difficulty, Canvas tile elements (minefield), F key: Flag mines
 Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects for: mine reveal, flag placement/removal, game over, game won
 */
- 
- "use strict";
-        let NUM_MINES; // change this to the result of the input form
-        let flag_count; // equal to number of mines to start
-        let revealed_count; // number of revealed tiles
-        const minefield = new Array(100); // moving to global scope so other functions can reference this easily
-        let mouse_x = 0;
-        let mouse_y = 0;
-        let game_in_progress = false;
-        let board_initialized = false;
-        // PROJECT 2 START
-        let game_mode;
-        let difficulty;
-        let autoPlay;
-        let bestMoveFn;
-        let currentTurn = 'player'; // 'player' or 'ai'\
-        // PROJECT 2 END
 
-        //get access to the start game button
-        var start_game_button = document.getElementById("start_game_button");
+"use strict";
+let NUM_MINES; // change this to the result of the input form
+let flag_count; // equal to number of mines to start
+let revealed_count; // number of revealed tiles
+const minefield = new Array(100); // moving to global scope so other functions can reference this easily
+let mouse_x = 0;
+let mouse_y = 0;
+let game_in_progress = false;
+let board_initialized = false;
+// PROJECT 2 START
+let game_mode;
+let difficulty;
+let autoPlay;
+let bestMoveFn;
+let currentTurn = 'player'; // 'player' or 'ai'\
+// PROJECT 2 END
 
-        // HTML to track flags for user (and therefore remaining mine count)
-        let flag_counter = document.getElementById("flagCounter");
-        let flags_placed = document.getElementById("flagsPlacedCounter");
+//get access to the start game button
+var start_game_button = document.getElementById("start_game_button");
 
-        //when the start button is clicked, chosen settings will be applied
-        start_game_button.addEventListener("click", apply_settings);
+// HTML to track flags for user (and therefore remaining mine count)
+let flag_counter = document.getElementById("flagCounter");
+let flags_placed = document.getElementById("flagsPlacedCounter");
 
-        //get access to the divider and the canvas elements
-        var div = document.getElementsByClassName("grid")[0];
-        const context = document.getElementById("canvas").getContext("2d");
+//when the start button is clicked, chosen settings will be applied
+start_game_button.addEventListener("click", apply_settings);
 
-        //specify text font and color in the canvas
-        context.font = "18px Arial";
-        context.strokeStyle = "black";
+//get access to the divider and the canvas elements
+var div = document.getElementsByClassName("grid")[0];
+const context = document.getElementById("canvas").getContext("2d");
 
-        //create the row and column labels
-        let x_col = 30;
-        let y_col = 520;
-        let y_row = 30;
-        let x_row = 708;
-        let rows = ['1', '2', '3', '4', '5', '6','7', '8', '9', '10'];
-        let cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-        for (let canvas_index = 0; canvas_index < 10; canvas_index++) {
-            if (canvas_index == 9 ) {
-                x_row = 702;
-            }
-            //write the current column index in position
-            context.strokeText(cols[canvas_index], x_col + (70 * canvas_index), y_col);
-            //write the current row index in position
-            context.strokeText(rows[canvas_index], x_row, y_row + (50 * canvas_index));
+//specify text font and color in the canvas
+context.font = "18px Arial";
+context.strokeStyle = "black";
 
-        }
+//create the row and column labels
+let x_col = 30;
+let y_col = 520;
+let y_row = 30;
+let x_row = 708;
+let rows = ['1', '2', '3', '4', '5', '6','7', '8', '9', '10'];
+let cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+for (let canvas_index = 0; canvas_index < 10; canvas_index++) {
+    if (canvas_index == 9 ) {
+        x_row = 702;
+    }
+    //write the current column index in position
+    context.strokeText(cols[canvas_index], x_col + (70 * canvas_index), y_col);
+    //write the current row index in position
+    context.strokeText(rows[canvas_index], x_row, y_row + (50 * canvas_index));
 
-        const victoryAudio = new Audio('soundFiles/coursepolicyreading.m4a');
-        victoryAudio.loop = true; // keeps it looping indefinitely
+}
 
-        function generate_game_grid() {
-            div.innerHTML = ""; // clear the div. Be careful about this when adding the labels!!
+const victoryAudio = new Audio('soundFiles/coursepolicyreading.m4a');
+victoryAudio.loop = true; // keeps it looping indefinitely
 
-            //for a 10x10 grid, we will have 100 buttons
-            for (var i = 0; i < 100; i++) {
+function generate_game_grid() {
+    div.innerHTML = ""; // clear the div. Be careful about this when adding the labels!!
 
-                //create a button element and store it in a tempButton variable
-                var tempButton = document.createElement("button");
+    //for a 10x10 grid, we will have 100 buttons
+    for (var i = 0; i < 100; i++) {
 
-                //give the tempButton an id (will be converted to a string)
-                tempButton.id = i;
+        //create a button element and store it in a tempButton variable
+        var tempButton = document.createElement("button");
 
-                // give the button a flag to tell if it is flagged or not
-                tempButton.is_flagged = 0;
+        //give the tempButton an id (will be converted to a string)
+        tempButton.id = i;
 
-                //make the height of the button be 50px (1/10 * height of the canvas)
-                tempButton.className = "tile-style";
+        // give the button a flag to tell if it is flagged or not
+        tempButton.is_flagged = 0;
 
-                // add left-click event handler to the button
-                // this line was changed for project 2
-                if (!autoPlay) enableClickListener(tempButton);
+        //make the height of the button be 50px (1/10 * height of the canvas)
+        tempButton.className = "tile-style";
 
-                // f-key event listener needs to know whether or not mouse is hovering over
-                // button.
-                tempButton.is_hovering = false;
-                tempButton.addEventListener("mouseenter", function () {
-                    this.is_hovering = true;
-                });
-                tempButton.addEventListener("mouseleave", function () {
-                    this.is_hovering = false;
-                });
+        // add left-click event handler to the button
+        // this line was changed for project 2
+        if (!autoPlay) enableClickListener(tempButton);
 
-                //append the tempButton to the element that div is "pointing" to
-                div.append(tempButton);
-            }
-        }
-
-        // track mouse's coordinates for flagging spaces
-        document.addEventListener("mousemove", function () {
-            mouse_x = event.clientX;
-            mouse_y = event.clientY;
+        // f-key event listener needs to know whether or not mouse is hovering over
+        // button.
+        tempButton.is_hovering = false;
+        tempButton.addEventListener("mouseenter", function () {
+            this.is_hovering = true;
+        });
+        tempButton.addEventListener("mouseleave", function () {
+            this.is_hovering = false;
         });
 
-        // event listener for f-key/flagging
-        document.addEventListener("keydown", function (event) {
-            console.log('f clicked.', game_in_progress);
+        //append the tempButton to the element that div is "pointing" to
+        div.append(tempButton);
+    }
+}
 
-            if (!game_in_progress) {
-                return; // do nothing if game is not active
-            }
-            let button = document.elementFromPoint(mouse_x, mouse_y);
-            if (button.is_hovering && event.key === "f") {
-                const sound = new Audio('soundFiles/flag.mov'); // PROJECT 2 ADDITION -------------------------------------------
-                sound.play();
-                sound.volume = 0.2;
-                console.log('flag key:', !button.is_flagged, !button.disabled, flag_count > 0);
-                if (!button.is_flagged && !button.disabled && flag_count > 0) { // flag
-                    console.log('flagging now');
-                    flag_count--;
-                    button.innerHTML = "FLAG";
-                    button.style.color = "#008CBA";
-                    flag_counter.innerText = `${flag_count} flags/mines left`;
-                    flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
+// track mouse's coordinates for flagging spaces
+document.addEventListener("mousemove", function () {
+    mouse_x = event.clientX;
+    mouse_y = event.clientY;
+});
 
-                    button.is_flagged = !button.is_flagged;
-                } else if (button.is_flagged && !button.disabled) { // unflag
-                    flag_count++;
-                    button.innerHTML = "";
-                    flag_counter.innerText = `${flag_count} flags/mines left`;
-                    flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
+// event listener for f-key/flagging
+document.addEventListener("keydown", function (event) {
+    console.log('f clicked.', game_in_progress);
 
-                    button.is_flagged = !button.is_flagged;
-                }
-            }
-        });
+    if (!game_in_progress) {
+        return; // do nothing if game is not active
+    }
+    let button = document.elementFromPoint(mouse_x, mouse_y);
+    if (button.is_hovering && event.key === "f") {
+        const sound = new Audio('soundFiles/flag.mov'); // PROJECT 2 ADDITION -------------------------------------------
+        sound.play();
+        sound.volume = 0.2;
+        console.log('flag key:', !button.is_flagged, !button.disabled, flag_count > 0);
+        if (!button.is_flagged && !button.disabled && flag_count > 0) { // flag
+            console.log('flagging now');
+            flag_count--;
+            button.innerHTML = "FLAG";
+            button.style.color = "#008CBA";
+            flag_counter.innerText = `${flag_count} flags/mines left`;
+            flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
 
-        // Apply mine count settings when start button is clicked, and other status indicators
-        function apply_settings() {
-            if (game_in_progress == false) {
-                // Gets number of mines from html mineCount selection
-                NUM_MINES = document.getElementById("mineCount").value;
-                flag_count = NUM_MINES;
-                revealed_count = 0;
-                // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
-                game_mode = document.getElementById("gameMode").value; // set game mode variable
-                difficulty = document.getElementById("difficulty").value;
-                autoPlay = game_mode === "auto";
-                if (difficulty === "easy") bestMoveFn = bestEasyMove;
-                else if (difficulty === "medium") bestMoveFn = bestMediumMove;
-                else if (difficulty === "hard") bestMoveFn = bestHardMove;
+            button.is_flagged = !button.is_flagged;
+        } else if (button.is_flagged && !button.disabled) { // unflag
+            flag_count++;
+            button.innerHTML = "";
+            flag_counter.innerText = `${flag_count} flags/mines left`;
+            flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
 
-                if (game_mode.value != "single" && difficulty.value == " ") { // validate difficulty chosen if AI mode chosen
-                    alert("Please select the AI difficulty level");
-                    return;
-                }
-                // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
+            button.is_flagged = !button.is_flagged;
+        }
+    }
+});
 
-                //get the settings paragraph
-                let game_status = document.getElementById("game_status");
+// Apply mine count settings when start button is clicked, and other status indicators
+function apply_settings() {
+    if (game_in_progress == false) {
+        // Gets number of mines from html mineCount selection
+        NUM_MINES = document.getElementById("mineCount").value;
+        flag_count = NUM_MINES;
+        revealed_count = 0;
+        // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
+        game_mode = document.getElementById("gameMode").value; // set game mode variable
+        difficulty = document.getElementById("difficulty").value;
+        autoPlay = game_mode === "auto";
+        if (difficulty === "easy") bestMoveFn = bestEasyMove;
+        else if (difficulty === "medium") bestMoveFn = bestMediumMove;
+        else if (difficulty === "hard") bestMoveFn = bestHardMove;
 
-                //change the text to show settings to validate that they've been applied
-                console.log(`Game started with ${NUM_MINES} mines`);
-                game_status.innerText = "Status: Playing";
-                flag_counter.innerText = `${flag_count} flags/mines left`;
-                flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
-                document.getElementById("start_game_button").innerText = "Game Started!";
-                generate_game_grid();
-                game_in_progress = true;
+        if (game_mode.value != "single" && difficulty.value == " ") { // validate difficulty chosen if AI mode chosen
+            alert("Please select the AI difficulty level");
+            return;
+        }
+        // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
 
-                if (autoPlay) {
-                    aiPlayAlone();
-                }
+        //get the settings paragraph
+        let game_status = document.getElementById("game_status");
 
-            } else {
-                alert("Game Is In Progress!")
-            }
+        //change the text to show settings to validate that they've been applied
+        console.log(`Game started with ${NUM_MINES} mines`);
+        game_status.innerText = "Status: Playing";
+        flag_counter.innerText = `${flag_count} flags/mines left`;
+        flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
+        document.getElementById("start_game_button").innerText = "Game Started!";
+        generate_game_grid();
+        game_in_progress = true;
 
+        if (autoPlay) {
+            aiPlayAlone();
         }
 
-        function left_click(passedBtnIdx) {
-            // PROJECT 2 START ----------------------------------
-            let id;
-            let btn;
-            if (typeof(passedBtnIdx) === "object") {
-                btn = passedBtnIdx.target;
-                id = parseInt(btn.id);
-            }
-            else {
-                id = passedBtnIdx;
-                btn = getBtn(id);
-            }
-            // PROJECT 2 END ------------------------------------
+    } else {
+        alert("Game Is In Progress!")
+    }
 
-            // ignore if game is not active
-            if (!game_in_progress) {
-                return;
-            }
-            //----------TEAM 11 CHANGES------------------
-            // allows the ai clicks when user clicks are disabled
-            if (game_mode === "interactive" && currentTurn !== 'player' && typeof(passedBtnIdx) === "object") {
-                return; 
-            }
-            // end of team 11 changes
+}
 
-            // generate the mine positions only after the first click
-            if (!board_initialized) {
-                board_initialized = 1;
-                generate_array(NUM_MINES, id);
-            }
+function left_click(passedBtnIdx) {
+    // PROJECT 2 START ----------------------------------
+    let id;
+    let btn;
+    if (typeof(passedBtnIdx) === "object") {
+        btn = passedBtnIdx.target;
+        id = parseInt(btn.id);
+    }
+    else {
+        id = passedBtnIdx;
+        btn = getBtn(id);
+    }
+    // PROJECT 2 END ------------------------------------
 
-            // we can disable buttons once their number is revealed, so this is all we need to check
-            if (!btn.is_flagged) {
-                if (minefield[id] == "*") {
-                    // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
-                    const sound = new Audio('soundFiles/lose.mov');
-                    sound.play();
-                    sound.volume = 0.5;
-                    // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
-                    gameOver();
-                }
-                // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
-                const sound = new Audio('soundFiles/safe.mov');
-                sound.play();
-                sound.volume = 0.2;
-                // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
-                reveal(btn);
-            }
+    // ignore if game is not active
+    if (!game_in_progress) {
+        return;
+    }
+    //----------TEAM 11 CHANGES------------------
+    // allows the ai clicks when user clicks are disabled
+    if (game_mode === "interactive" && currentTurn !== 'player' && typeof(passedBtnIdx) === "object") {
+        return; 
+    }
+    // end of team 11 changes
 
-            // check for victory
-            console.log('checking for victory:', revealed_count, 100 - NUM_MINES);
-            if (revealed_count == 100 - NUM_MINES) {
-                // Verify all mines are flagged
-                let correctFlags = 0;
-                for (let i = 0; i < minefield.length; i++) {
-                    if (minefield[i] === '*' && getBtn(i).is_flagged) {
-                        correctFlags++;
-                    }
-                }
-                console.log("Correct flags:", correctFlags, "/", NUM_MINES);
+    // generate the mine positions only after the first click
+    if (!board_initialized) {
+        board_initialized = 1;
+        generate_array(NUM_MINES, id);
+    }
 
-                //if (correctFlags === Number(NUM_MINES)) {
-                    console.log("All mines correctly flagged!");
-                    const sound = new Audio('soundFiles/asmr.m4a');
-                    sound.play();
-                    game_in_progress = false;
-                    board_initialized = false;
-                    document.getElementById("start_game_button").innerText = "New Game?";
-                    document.getElementById("game_status").innerText = "Game Over: Victory!";
-                    activateVictoryMode();
-
-                //}
-                //else {
-                    //alert("You have revealed all safe tiles, but not all mines are flagged correctly. Keep trying!");
-                //}
-                
-            }
-
-            // PROJECT 2 START ---------------------------------------
-            // handle turn switching for interactive mode
-            if (game_mode === "interactive" && game_in_progress && currentTurn === 'player') {
-                currentTurn = "ai";
-                // disable clicks for player while it is ai's turn
-                for (let idx = 0; idx < minefield.length; idx++) {
-                    disableClickListener(getBtn(idx));
-                }
-                // trigger ai turn after short delay
-                if (game_in_progress) {
-                    performAiTurn();
-                }
-            }
-
-            else if (game_mode === "auto") { // if game not over
-                for (let idx = 0; idx < minefield.length; idx++) {
-                    disableClickListener(getBtn(idx));
-                }
-            }
-            // PROJECT 2 END ----------------------------------------
-
+    // we can disable buttons once their number is revealed, so this is all we need to check
+    if (!btn.is_flagged) {
+        if (minefield[id] == "*") {
+            // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
+            const sound = new Audio('soundFiles/lose.mov');
+            sound.play();
+            sound.volume = 0.5;
+            // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
+            gameOver();
         }
-        // NEW CODE TEAM 11- MODIFIED FOR GAME OVER ANIMATION------------------------------------
-        // shows all bombs and explosion animation when a mine is clicked
-            function gameOver() {
-            console.log("You lose :(");
+        // PROJECT 2 START ---------------------------------------------------------------------------------------------------------------------
+        const sound = new Audio('soundFiles/safe.mov');
+        sound.play();
+        sound.volume = 0.2;
+        // PROJECT 2 END ---------------------------------------------------------------------------------------------------------------------
+        reveal(btn);
+    }
+
+    // check for victory
+    console.log('checking for victory:', revealed_count, 100 - NUM_MINES);
+    if (revealed_count == 100 - NUM_MINES) {
+        // Verify all mines are flagged
+        let correctFlags = 0;
+        for (let i = 0; i < minefield.length; i++) {
+            if (minefield[i] === '*' && getBtn(i).is_flagged) {
+                correctFlags++;
+            }
+        }
+        console.log("Correct flags:", correctFlags, "/", NUM_MINES);
+
+        //if (correctFlags === Number(NUM_MINES)) {
+            console.log("All mines correctly flagged!");
+            const sound = new Audio('soundFiles/asmr.m4a');
+            sound.play();
             game_in_progress = false;
             board_initialized = false;
             document.getElementById("start_game_button").innerText = "New Game?";
-            document.getElementById("game_status").innerText = "Game Over: Defeat";
-            // reveal all bombs
-            let bombIndices = [];
-            for (let i = 0; i < 100; i++) {
-                if (minefield[i] === '*') {
-                   bombIndices.push(i);
-                }
-            }
-            let delay = 0;
-            bombIndices.forEach((index) => {
-                let btn = document.getElementById(index);
-                btn.style.backgroundImage = "none";
+            document.getElementById("game_status").innerText = "Game Over: Victory!";
+            activateVictoryMode();
+
+        //}
+        //else {
+            //alert("You have revealed all safe tiles, but not all mines are flagged correctly. Keep trying!");
+        //}
+        
+    }
+
+    // PROJECT 2 START ---------------------------------------
+    // handle turn switching for interactive mode
+    if (game_mode === "interactive" && game_in_progress && currentTurn === 'player') {
+        currentTurn = "ai";
+        // disable clicks for player while it is ai's turn
+        for (let idx = 0; idx < minefield.length; idx++) {
+            disableClickListener(getBtn(idx));
+        }
+        // trigger ai turn after short delay
+        if (game_in_progress) {
+            performAiTurn();
+        }
+    }
+
+    else if (game_mode === "auto") { // if game not over
+        for (let idx = 0; idx < minefield.length; idx++) {
+            disableClickListener(getBtn(idx));
+        }
+    }
+    // PROJECT 2 END ----------------------------------------
+
+}
+// NEW CODE TEAM 11- MODIFIED FOR GAME OVER ANIMATION------------------------------------
+// shows all bombs and explosion animation when a mine is clicked
+    function gameOver() {
+    console.log("You lose :(");
+    game_in_progress = false;
+    board_initialized = false;
+    document.getElementById("start_game_button").innerText = "New Game?";
+    document.getElementById("game_status").innerText = "Game Over: Defeat";
+    // reveal all bombs
+    let bombIndices = [];
+    for (let i = 0; i < 100; i++) {
+        if (minefield[i] === '*') {
+            bombIndices.push(i);
+        }
+    }
+    let delay = 0;
+    bombIndices.forEach((index) => {
+        let btn = document.getElementById(index);
+        btn.style.backgroundImage = "none";
+        setTimeout(() => {
                 setTimeout(() => {
-                     setTimeout(() => {
-                        btn.style.backgroundImage = "url('explosion.png')";
-                    }, 700);
+                btn.style.backgroundImage = "url('explosion.png')";
+            }, 700);
 
-                    btn.style.backgroundImage = "url('bomb.png')";
-                   
-                    btn.style.backgroundSize = "cover";
-                    btn.disabled = true;
-                }, delay);
-                delay += 200; // increase delay for next bomb
-            });
-        }
-        // end of team 11 changes
+            btn.style.backgroundImage = "url('bomb.png')";
+            
+            btn.style.backgroundSize = "cover";
+            btn.disabled = true;
+        }, delay);
+        delay += 200; // increase delay for next bomb
+    });
+}
+// end of team 11 changes
 
-        //helper function for BFS
-        function idx(r, c) { return r * 10 + c; }
+//helper function for BFS
+function idx(r, c) { return r * 10 + c; }
 
-        // Reveal tile value when clicked
-        function reveal(tile) {
-            console.log(`revealing ${tile.id}`);
+// Reveal tile value when clicked
+function reveal(tile) {
+    console.log(`revealing ${tile.id}`);
 
-            // we don't need to click the button anymore, we can disable it
-
-
-            tile.disabled = true;
-            revealed_count++;
+    // we don't need to click the button anymore, we can disable it
 
 
-            // set the text on the button to the number of adjacent mines here, or if its just a mine
-            if (minefield[tile.id] != 0) {
-                tile.innerHTML = minefield[tile.id]
-            };
-            tile.style.color = number_color(minefield[tile.id]);
+    tile.disabled = true;
+    revealed_count++;
 
-            // Cascading mine reveal (BFS)
-            if (minefield[tile.id] == 0) {
-                //DFS to reveal all connected 0 cells
-                let queue = [tile.id];
-                while (queue.length) {
-                    //removes last cell from queue 
-                    let curr = queue.pop();
-                    //convert current index for 1d array "minefield" into 
-                    //it's corresponding row and col values
-                    let r = Math.floor(curr / 10), c = curr % 10;
-                    //loop through all possible directions
-                    for (let dr = -1; dr <= 1; dr++) {
-                        for (let dc = -1; dc <= 1; dc++) {
-                            //calculate current "neighbors" row (nr) and column (nc) 
-                            let nr = r + dr, nc = c + dc;
-                            //convert to neighbors index (ni)
-                            let ni = idx(nr, nc);
-                            //get button element
-                            let btn = document.getElementById(ni);
-                            //check that neighbor is within the grid bounds, not already revealed, and not flagged
-                            if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && !btn.disabled && !btn.is_flagged) {
-                                //update status of button
-                                btn.disabled = true;
-                                revealed_count++;
-                                if (minefield[ni] != 0) {   // If mines_nearby is 0, leave the tile blank
-                                    btn.innerHTML = minefield[ni];  // Otherwise, show mines_nearby/mine
-                                }
-                                console.log(`revealing ${ni}`);
-                                btn.style.color = number_color(minefield[ni]);
-                                //add current neighbor to the queue to continue to DFS 
-                                //iff said current neighbor is a 0 cell
-                                if (minefield[ni] === 0) queue.push(ni);
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
-        // Generates minefield with no mine where the user clicked (start_index)
-        function generate_array(mines_amount, start_index) {
-            minefield.fill("", 0, 100 - mines_amount);      // Fills blank spaces
-            minefield.fill("*", 100 - mines_amount, 100);   // Fills with mines (*)
+    // set the text on the button to the number of adjacent mines here, or if its just a mine
+    if (minefield[tile.id] != 0) {
+        tile.innerHTML = minefield[tile.id]
+    };
+    tile.style.color = number_color(minefield[tile.id]);
 
-            console.log("mines: " + minefield);
-            shuffle(minefield); // Randomizes minefield
-            console.log("start: " + minefield);
-
-            // ENSURE FIRST CLICK AND ADJACENT CELLS ARE SAFE
-            // Get coordinates of first clicked title (start_index) + neighbors
-            const safeIndices = [start_index];
-            const startRow = Math.floor(start_index / 10);
-            const startCol = start_index % 10;
+    // Cascading mine reveal (BFS)
+    if (minefield[tile.id] == 0) {
+        //DFS to reveal all connected 0 cells
+        let queue = [tile.id];
+        while (queue.length) {
+            //removes last cell from queue 
+            let curr = queue.pop();
+            //convert current index for 1d array "minefield" into 
+            //it's corresponding row and col values
+            let r = Math.floor(curr / 10), c = curr % 10;
+            //loop through all possible directions
             for (let dr = -1; dr <= 1; dr++) {
                 for (let dc = -1; dc <= 1; dc++) {
-                    const newRow = startRow + dr;
-                    const newCol = startCol + dc;
-                    if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
-                        safeIndices.push(newRow * 10 + newCol);
+                    //calculate current "neighbors" row (nr) and column (nc) 
+                    let nr = r + dr, nc = c + dc;
+                    //convert to neighbors index (ni)
+                    let ni = idx(nr, nc);
+                    //get button element
+                    let btn = document.getElementById(ni);
+                    //check that neighbor is within the grid bounds, not already revealed, and not flagged
+                    if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && !btn.disabled && !btn.is_flagged) {
+                        //update status of button
+                        btn.disabled = true;
+                        revealed_count++;
+                        if (minefield[ni] != 0) {   // If mines_nearby is 0, leave the tile blank
+                            btn.innerHTML = minefield[ni];  // Otherwise, show mines_nearby/mine
+                        }
+                        console.log(`revealing ${ni}`);
+                        btn.style.color = number_color(minefield[ni]);
+                        //add current neighbor to the queue to continue to DFS 
+                        //iff said current neighbor is a 0 cell
+                        if (minefield[ni] === 0) queue.push(ni);
                     }
                 }
-            }
-            console.log("safe indices: " + safeIndices);
-            // Ensure no mines in the safe zone (first clicked title + neighbors)
-            for (const index of safeIndices) {
-                if (minefield[index] == "*") {
-                    // Find a non-safe index to swap with 
-                    let swapIndex;
-                    do {
-                        swapIndex = Math.floor(Math.random() * 100);
-                    } while (safeIndices.includes(swapIndex) || minefield[swapIndex] == "*"); // Ensure swapIndex is not in safeIndices and is not a mine
-                    // Swap the mine with the non-mine
-                    [minefield[index], minefield[swapIndex]] = [minefield[swapIndex], minefield[index]];
-                    console.log(`Swapped mine at index ${index} with non-mine at index ${swapIndex}`); // Log the swap operation
-                }
-            }
-            console.log("end: " + minefield);
-
-            // Generates "mines_nearby" values
-            for (let i = 0; i < 100; i++) {
-                let mines_nearby = 0;
-                if (minefield[i] != "*") {
-                    if (minefield[i - 11] == "*" && (i % 10 != 0)) {    // Top Left (i % 10 != 0 is for borders)
-                        mines_nearby++;
-                    }
-                    if (minefield[i - 10] == "*") {    // Top
-                        mines_nearby++;
-                    }
-                    if (minefield[i - 9] == "*" && ((i + 1) % 10 != 0)) {     // Top Right
-                        mines_nearby++;
-                    }
-                    if (minefield[i - 1] == "*" && (i % 10 != 0)) {     // Left
-                        mines_nearby++;
-                    }
-                    if (minefield[i + 1] == "*" && ((i + 1) % 10 != 0)) {     // Right
-                        mines_nearby++;
-                    }
-                    if (minefield[i + 9] == "*" && (i % 10 != 0)) {     // Bottom Left
-                        mines_nearby++;
-                    }
-                    if (minefield[i + 10] == "*") {    // Bottom
-                        mines_nearby++;
-                    }
-                    if (minefield[i + 11] == "*" && ((i + 1) % 10 != 0)) {    // Bottom Right
-                        mines_nearby++;
-                    }
-                    minefield[i] = mines_nearby;    // Assigns mine number to field
-                }
-            }
-
-            // Prints minefield in console for testing
-            console.log("Minefield:")
-            for (let i = 0; i < 100; i += 10) {
-                let line = "";
-                for (let j = 0; j < 10; j++) {
-                    line += minefield[i + j] + " ";
-                }
-                console.log(line);
-            }
-
-        }
-
-        // SOURCE: https://javascript.info/task/shuffle
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                let j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
             }
         }
+    }
+}
 
-        // Returns a color based on what the tile revealed was
-        function number_color(number) {
-            if (number == 1) {
-                return "blue";
-            }
-            else if (number == 2) {
-                return "green";
-            }
-            else if (number == 3) {
-                return "red";
-            }
-            else if (number == 4) {
-                return "purple";
-            }
-            else if (number == 5) {
-                return "maroon";
-            }
-            else if (number == 6) {
-                return "teal";
-            }
-            else if (number == 7) {
-                return "black";
-            }
-            else if (number == 8) {
-                return "gray";
-            }
-            else {
-                return "black"; // Mine was revealed
+// Generates minefield with no mine where the user clicked (start_index)
+function generate_array(mines_amount, start_index) {
+    minefield.fill("", 0, 100 - mines_amount);      // Fills blank spaces
+    minefield.fill("*", 100 - mines_amount, 100);   // Fills with mines (*)
+
+    console.log("mines: " + minefield);
+    shuffle(minefield); // Randomizes minefield
+    console.log("start: " + minefield);
+
+    // ENSURE FIRST CLICK AND ADJACENT CELLS ARE SAFE
+    // Get coordinates of first clicked title (start_index) + neighbors
+    const safeIndices = [start_index];
+    const startRow = Math.floor(start_index / 10);
+    const startCol = start_index % 10;
+    for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+            const newRow = startRow + dr;
+            const newCol = startCol + dc;
+            if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
+                safeIndices.push(newRow * 10 + newCol);
             }
         }
+    }
+    console.log("safe indices: " + safeIndices);
+    // Ensure no mines in the safe zone (first clicked title + neighbors)
+    for (const index of safeIndices) {
+        if (minefield[index] == "*") {
+            // Find a non-safe index to swap with 
+            let swapIndex;
+            do {
+                swapIndex = Math.floor(Math.random() * 100);
+            } while (safeIndices.includes(swapIndex) || minefield[swapIndex] == "*"); // Ensure swapIndex is not in safeIndices and is not a mine
+            // Swap the mine with the non-mine
+            [minefield[index], minefield[swapIndex]] = [minefield[swapIndex], minefield[index]];
+            console.log(`Swapped mine at index ${index} with non-mine at index ${swapIndex}`); // Log the swap operation
+        }
+    }
+    console.log("end: " + minefield);
 
-        // UNLESS NESSECARY NEW CODE BELOW THIS LINE ----------------------------------------------------
-        const enableClickListener = btn => btn.addEventListener("click", left_click);
-        const disableClickListener = btn => btn.removeEventListener("click", left_click);
+    // Generates "mines_nearby" values
+    for (let i = 0; i < 100; i++) {
+        let mines_nearby = 0;
+        if (minefield[i] != "*") {
+            if (minefield[i - 11] == "*" && (i % 10 != 0)) {    // Top Left (i % 10 != 0 is for borders)
+                mines_nearby++;
+            }
+            if (minefield[i - 10] == "*") {    // Top
+                mines_nearby++;
+            }
+            if (minefield[i - 9] == "*" && ((i + 1) % 10 != 0)) {     // Top Right
+                mines_nearby++;
+            }
+            if (minefield[i - 1] == "*" && (i % 10 != 0)) {     // Left
+                mines_nearby++;
+            }
+            if (minefield[i + 1] == "*" && ((i + 1) % 10 != 0)) {     // Right
+                mines_nearby++;
+            }
+            if (minefield[i + 9] == "*" && (i % 10 != 0)) {     // Bottom Left
+                mines_nearby++;
+            }
+            if (minefield[i + 10] == "*") {    // Bottom
+                mines_nearby++;
+            }
+            if (minefield[i + 11] == "*" && ((i + 1) % 10 != 0)) {    // Bottom Right
+                mines_nearby++;
+            }
+            minefield[i] = mines_nearby;    // Assigns mine number to field
+        }
+    }
 
-        const xyToIdx = xyObj => xyObj.y * 10 + xyObj.x;
-        const idxToXY = idx => {
-            return {
-                x: idx % 10,
-                y: idx / 10
+    // Prints minefield in console for testing
+    console.log("Minefield:")
+    for (let i = 0; i < 100; i += 10) {
+        let line = "";
+        for (let j = 0; j < 10; j++) {
+            line += minefield[i + j] + " ";
+        }
+        console.log(line);
+    }
+
+}
+
+// SOURCE: https://javascript.info/task/shuffle
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+// Returns a color based on what the tile revealed was
+function number_color(number) {
+    if (number == 1) {
+        return "blue";
+    }
+    else if (number == 2) {
+        return "green";
+    }
+    else if (number == 3) {
+        return "red";
+    }
+    else if (number == 4) {
+        return "purple";
+    }
+    else if (number == 5) {
+        return "maroon";
+    }
+    else if (number == 6) {
+        return "teal";
+    }
+    else if (number == 7) {
+        return "black";
+    }
+    else if (number == 8) {
+        return "gray";
+    }
+    else {
+        return "black"; // Mine was revealed
+    }
+}
+
+// UNLESS NESSECARY NEW CODE BELOW THIS LINE ----------------------------------------------------
+const enableClickListener = btn => btn.addEventListener("click", left_click);
+const disableClickListener = btn => btn.removeEventListener("click", left_click);
+
+const xyToIdx = xyObj => xyObj.y * 10 + xyObj.x;
+const idxToXY = idx => {
+    return {
+        x: idx % 10,
+        y: idx / 10
+    };
+}
+const getBtn = idx => document.getElementById(idx.toString());
+
+const bestEasyMove = () => {
+    // TODO: Anya - implement.
+    console.log("easy move fn entered");
+    // need to create a while loop that picks a random tile and checks if the button is disabled or flagged.
+    // it keeps looking for a cell to pick until it finds a free one.
+    let maybeClick = Math.floor(Math.random() * 100);
+    while(getBtn(maybeClick).disabled || getBtn(maybeClick).is_flagged) {
+        console.log("still in while");
+        maybeClick = Math.floor(Math.random() * 100);
+    }
+
+    console.log("while exited");
+
+    let bestMove = {
+        click: [maybeClick],
+        flag: []
+    }
+    console.log("easy move fn exiting");
+    return bestMove;
+}
+
+function getNeighbors(idx) {
+    let neighbors = [idx-1-10, idx-0-10, idx+1-10, idx-1-0, idx+1-0, idx-1+10, idx-0+10, idx+1+10];
+    if (idx % 10 == 0) { // left edge
+        neighbors = neighbors.filter((n) => n % 10 != 9);
+    }
+    else if (idx % 10 == 9) { // right edge
+        neighbors = neighbors.filter((n) => n % 10 != 0);
+    }
+
+    neighbors = neighbors.filter(n => n >= 0 && n < minefield.length);
+    
+    return neighbors;
+}
+
+const bestMediumMove = () => {
+    console.log("Calculating best medium move...");
+    let bestMove;
+    let goodMoves = [];
+    //Array of buttons to flag, if needed later
+    let buttonsToFlag = [];
+
+    for (let idx = 0; idx < minefield.length; idx++) {
+        // If tile is hidden, move on
+        if (!getBtn(idx).disabled) continue;
+
+        // Establish variable to keep track of no. of hidden neighbors, and variable for number of cell
+        let neighborCount = 0;
+        let value = minefield[idx];
+
+        // Array of all possible neighbors
+        let neighbors = getNeighbors(idx);
+        
+        // Check if each neighbor is even in the grid; if so, check if neighbor is hidden, and increment neighborCount and push neighbor to buttonsToFlag if so
+        for (let i = 0; i < neighbors.length; i++) {
+            if (!getBtn(neighbors[i]).disabled) {
+                neighborCount++;
             };
         }
-        const getBtn = idx => document.getElementById(idx.toString());
 
-        const bestEasyMove = () => {
-            // TODO: Anya - implement.
-            console.log("easy move fn entered");
-            // need to create a while loop that picks a random tile and checks if the button is disabled or flagged.
-            // it keeps looking for a cell to pick until it finds a free one.
-            let maybeClick = Math.floor(Math.random() * 100);
-            while(getBtn(maybeClick).disabled || getBtn(maybeClick).is_flagged) {
-                console.log("still in while");
-                maybeClick = Math.floor(Math.random() * 100);
+        // If no. of hidden neighbors = number of cell, best move is to flag all neighbors
+        if (neighborCount == value && neighborCount > 0) {
+            for (let i = 0; i < neighbors.length; i++) {
+                if (!getBtn(neighbors[i]).disabled && !getBtn(neighbors[i]).is_flagged) {
+                    buttonsToFlag.push(neighbors[i]);
+                };
             }
+        }
+    }
+    if (buttonsToFlag.length > 0) {
+        bestMove = {
+            flag: buttonsToFlag,
+            click: undefined
+        };
+        console.log("Best medium move found (flagging):", bestMove);
+        return bestMove;
+    }
 
-            console.log("while exited");
+    for (let idx = 0; idx < minefield.length; idx++) {  
 
-            let bestMove = {
-                click: [maybeClick],
-                flag: []
+        if (!getBtn(idx).disabled) continue;
+
+        let value = minefield[idx];
+        let neighbors = getNeighbors(idx);
+
+        let buttonsToClick = [];
+        let flaggedNeighbors = 0;
+
+        for (let i = 0; i < neighbors.length; i++) {
+            if (!getBtn(neighbors[i]).disabled) {
+                if (getBtn(neighbors[i]).is_flagged) {
+                    flaggedNeighbors++;
+                }
+                else {
+                    buttonsToClick.push(neighbors[i]);
+                }
             }
-            console.log("easy move fn exiting");
+        }
+
+        if (flaggedNeighbors == value && buttonsToClick.length > 0) {
+            bestMove = {
+                flag: [],
+                click: [buttonsToClick[Math.floor(buttonsToClick.length * Math.random())]]
+            };
+            console.log("Best medium move found (clicking):", bestMove);
             return bestMove;
         }
-
-        function getNeighbors(idx) {
-            let neighbors = [idx-1-10, idx-0-10, idx+1-10, idx-1-0, idx+1-0, idx-1+10, idx-0+10, idx+1+10];
-            if (idx % 10 == 0) { // left edge
-                neighbors = neighbors.filter((n) => n % 10 != 9);
-            }
-            else if (idx % 10 == 9) { // right edge
-                neighbors = neighbors.filter((n) => n % 10 != 0);
-            }
-
-            neighbors = neighbors.filter(n => n >= 0 && n < minefield.length);
-            
-            return neighbors;
-        }
-
-        const bestMediumMove = () => {
-            console.log("Calculating best medium move...");
-            let bestMove;
-            let goodMoves = [];
-            //Array of buttons to flag, if needed later
-            let buttonsToFlag = [];
-
-            for (let idx = 0; idx < minefield.length; idx++) {
-                // If tile is hidden, move on
-                if (!getBtn(idx).disabled) continue;
-
-                // Establish variable to keep track of no. of hidden neighbors, and variable for number of cell
-                let neighborCount = 0;
-                let value = minefield[idx];
-
-                // Array of all possible neighbors
-                let neighbors = getNeighbors(idx);
-                
-                // Check if each neighbor is even in the grid; if so, check if neighbor is hidden, and increment neighborCount and push neighbor to buttonsToFlag if so
-                for (let i = 0; i < neighbors.length; i++) {
-                    if (!getBtn(neighbors[i]).disabled) {
-                        neighborCount++;
-                    };
-                }
-
-                // If no. of hidden neighbors = number of cell, best move is to flag all neighbors
-                if (neighborCount == value && neighborCount > 0) {
-                    for (let i = 0; i < neighbors.length; i++) {
-                        if (!getBtn(neighbors[i]).disabled && !getBtn(neighbors[i]).is_flagged) {
-                            buttonsToFlag.push(neighbors[i]);
-                        };
-                    }
-                }
-            }
-            if (buttonsToFlag.length > 0) {
-                bestMove = {
-                    flag: buttonsToFlag,
-                    click: undefined
-                };
-                console.log("Best medium move found (flagging):", bestMove);
-                return bestMove;
-            }
-
-            for (let idx = 0; idx < minefield.length; idx++) {  
-
-                if (!getBtn(idx).disabled) continue;
-
-                let value = minefield[idx];
-                let neighbors = getNeighbors(idx);
-
-                let buttonsToClick = [];
-                let flaggedNeighbors = 0;
-
-                for (let i = 0; i < neighbors.length; i++) {
-                    if (!getBtn(neighbors[i]).disabled) {
-                        if (getBtn(neighbors[i]).is_flagged) {
-                            flaggedNeighbors++;
-                        }
-                        else {
-                            buttonsToClick.push(neighbors[i]);
-                        }
-                    }
-                }
-
-                if (flaggedNeighbors == value && buttonsToClick.length > 0) {
-                    bestMove = {
-                        flag: [],
-                        click: [buttonsToClick[Math.floor(buttonsToClick.length * Math.random())]]
-                    };
-                    console.log("Best medium move found (clicking):", bestMove);
-                    return bestMove;
-                }
-            }; // If not, then move to next cell and repeat
+    }; // If not, then move to next cell and repeat
 
 
-            if (bestMove === undefined) {
-                console.log("No best medium move found.");
-                return bestEasyMove();
-            }
-        }
+    if (bestMove === undefined) {
+        console.log("No best medium move found.");
+        return bestEasyMove();
+    }
+}
 
-        const bestHardMove = () => {
-            // if the board hasn't been initalized, choose a tile at random
-            if (!board_initialized) return bestEasyMove();
-            // Make a subarray of the indicies that neither contain a mine or are clicked
-            const goodMoves = Array.from(minefield.keys().filter(k => minefield[k] !== "*" && !getBtn(k).disabled));
-            // If the array is not empty, return one of the indicies at random
-            return (goodMoves.length > 0) ? 
-            {
-                click: [goodMoves[Math.floor(Math.random() * goodMoves.length)]], 
-                flag: bestMediumMove().flag,
-            }
-            : bestMediumMove();
-        }
+const bestHardMove = () => {
+    // if the board hasn't been initalized, choose a tile at random
+    if (!board_initialized) return bestEasyMove();
+    // Make a subarray of the indicies that neither contain a mine or are clicked
+    const goodMoves = Array.from(minefield.keys().filter(k => minefield[k] !== "*" && !getBtn(k).disabled));
+    // If the array is not empty, return one of the indicies at random
+    return (goodMoves.length > 0) ? 
+    {
+        click: [goodMoves[Math.floor(Math.random() * goodMoves.length)]], 
+        flag: bestMediumMove().flag,
+    }
+    : bestMediumMove();
+}
 
-        // https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep
-        const sleep = (ms) => {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+// https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep
+const sleep = (ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-        // The AI makes a single passed move on the board.
-        const aiMakesMove = async (move) => {
-            console.log("move", move);
-            await sleep(1000);
-             if (move.flag.length > 0) {
-                console.log("aiMakesMove(): placing flags:", move.flag);
-                aiPlaceFlags(move.flag);
-                console.log("flags placed:", move.flag);
-            }
-            await sleep(250);
-            // clear highlight and make the click
-            if (move.click === undefined) {
-                return;
-            }
-            else {
-                console.log("aiMakesMove(): clicking:", move.click);
-                for (let idx of move.click) {
-                    if ((getBtn(idx)).disabled) continue; // skip if already revealed
-                    // highligh tile to be clicked
-                    if (move && typeof move.click !== 'undefined') aiHighlight(move.click);
-                    await sleep(500);
-                    aiCLHighlight();
-                    left_click(idx);
-                    await sleep(250);
-                }
-            }
-        }
-
-        // call to have the ai start playing alone
-        const aiPlayAlone = async () => {
-            while (game_in_progress) {
-                await aiMakesMove(bestMoveFn());
-            }
-        }
-
-        // Perform AI turn using existing aiMakesMove function
-        const performAiTurn = async () => {
-            if (!game_in_progress || currentTurn !== 'ai') return;
-            console.log("Turn", currentTurn);
-            while (game_in_progress && currentTurn === 'ai') {
-                let move = bestMoveFn();
-                if (!move) {
-                    move = bestEasyMove();
-                    move.flag = move.flag || [];
-                }
-
-                // Use existing aiMakesMove function
-                await aiMakesMove(move);
-
-                if (move.click && move.click.length > 0) {
-                    break;
-                }
-            }
-
-            if (game_in_progress) {
-                currentTurn = 'player'; // Hand turn back to player
-                // Re-enable clicks for player
-                for (let i = 0; i < minefield.length; i++) {
-                    enableClickListener(getBtn(i));
-                }
-            }
-        }
-
-        const aiHighlight = (idx) => {
+// The AI makes a single passed move on the board.
+const aiMakesMove = async (move) => {
+    console.log("move", move);
+    await sleep(1000);
+        if (move.flag.length > 0) {
+        console.log("aiMakesMove(): placing flags:", move.flag);
+        aiPlaceFlags(move.flag);
+        console.log("flags placed:", move.flag);
+    }
+    await sleep(250);
+    // clear highlight and make the click
+    if (move.click === undefined) {
+        return;
+    }
+    else {
+        console.log("aiMakesMove(): clicking:", move.click);
+        for (let idx of move.click) {
+            if ((getBtn(idx)).disabled) continue; // skip if already revealed
+            // highligh tile to be clicked
+            if (move && typeof move.click !== 'undefined') aiHighlight(move.click);
+            await sleep(500);
             aiCLHighlight();
-            const btn = getBtn(idx);
-            if (btn) btn.classList.add('ai-planned');
+            left_click(idx);
+            await sleep(250);
+        }
+    }
+}
 
-            aiHighlight._idx = idx;
-        };
+// call to have the ai start playing alone
+const aiPlayAlone = async () => {
+    while (game_in_progress) {
+        await aiMakesMove(bestMoveFn());
+    }
+}
 
-        const aiCLHighlight = () => {
-            if (typeof aiHighlight._idx !== 'undefined') {
-                const prev = getBtn(aiHighlight._idx);
-                if (prev) prev.classList.remove('ai-planned');
-                delete aiHighlight._idx;
-            }
-        };
-
-        function activateVictoryMode() {
-            // Only start playing if it isn't already playing
-            if (victoryAudio.paused) {
-                victoryAudio.play();
-            }
+// Perform AI turn using existing aiMakesMove function
+const performAiTurn = async () => {
+    if (!game_in_progress || currentTurn !== 'ai') return;
+    console.log("Turn", currentTurn);
+    while (game_in_progress && currentTurn === 'ai') {
+        let move = bestMoveFn();
+        if (!move) {
+            move = bestEasyMove();
+            move.flag = move.flag || [];
         }
 
-        function aiPlaceFlags(flagIndices) {
-            flagIndices.forEach((index) => {
-                let btn = getBtn(index);
-                if (!btn.is_flagged && !btn.disabled && flag_count > 0) { // flag
-                    console.log('AI flagging now at index', index);
-                    flag_count--;
-                    btn.innerHTML = "FLAG";
-                    btn.style.color = "#008CBA";
-                    flag_counter.innerText = `${flag_count} flags/mines left`;
-                    flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
+        // Use existing aiMakesMove function
+        await aiMakesMove(move);
 
-                    btn.is_flagged = !btn.is_flagged;
-                }
-            });
+        if (move.click && move.click.length > 0) {
+            break;
         }
+    }
+
+    if (game_in_progress) {
+        currentTurn = 'player'; // Hand turn back to player
+        // Re-enable clicks for player
+        for (let i = 0; i < minefield.length; i++) {
+            enableClickListener(getBtn(i));
+        }
+    }
+}
+
+const aiHighlight = (idx) => {
+    aiCLHighlight();
+    const btn = getBtn(idx);
+    if (btn) btn.classList.add('ai-planned');
+
+    aiHighlight._idx = idx;
+};
+
+const aiCLHighlight = () => {
+    if (typeof aiHighlight._idx !== 'undefined') {
+        const prev = getBtn(aiHighlight._idx);
+        if (prev) prev.classList.remove('ai-planned');
+        delete aiHighlight._idx;
+    }
+};
+
+function activateVictoryMode() {
+    // Only start playing if it isn't already playing
+    if (victoryAudio.paused) {
+        victoryAudio.play();
+    }
+}
+
+function aiPlaceFlags(flagIndices) {
+    flagIndices.forEach((index) => {
+        let btn = getBtn(index);
+        if (!btn.is_flagged && !btn.disabled && flag_count > 0) { // flag
+            console.log('AI flagging now at index', index);
+            flag_count--;
+            btn.innerHTML = "FLAG";
+            btn.style.color = "#008CBA";
+            flag_counter.innerText = `${flag_count} flags/mines left`;
+            flags_placed.innerText = `${NUM_MINES - flag_count} flags placed`;
+
+            btn.is_flagged = !btn.is_flagged;
+        }
+    });
+}
