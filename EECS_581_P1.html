@@ -372,7 +372,9 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                         correctFlags++;
                     }
                 }
-                if (correctFlags === Number(NUM_MINES)) {
+                console.log("Correct flags:", correctFlags, "/", NUM_MINES);
+
+                //if (correctFlags === Number(NUM_MINES)) {
                     console.log("All mines correctly flagged!");
                     const sound = new Audio('soundFiles/asmr.m4a');
                     sound.play();
@@ -382,10 +384,10 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                     document.getElementById("game_status").innerText = "Game Over: Victory!";
                     activateVictoryMode();
 
-                }
-                else {
-                    alert("You have revealed all safe tiles, but not all mines are flagged correctly. Keep trying!");
-                }
+                //}
+                //else {
+                    //alert("You have revealed all safe tiles, but not all mines are flagged correctly. Keep trying!");
+                //}
                 
             }
 
