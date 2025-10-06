@@ -670,9 +670,10 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             console.log("Calculating best medium move...");
             let bestMove;
             let goodMoves = [];
+            //Array of buttons to flag, if needed later
+            let buttonsToFlag = [];
 
             for (let idx = 0; idx < minefield.length; idx++) {
-                console.log("Checking index for flagging:", idx);
                 // If tile is hidden, move on
                 if (!getBtn(idx).disabled) continue;
 
@@ -682,9 +683,6 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
 
                 // Array of all possible neighbors
                 let neighbors = getNeighbors(idx);
-
-                //Array of buttons to flag, if needed later
-                let buttonsToFlag = [];
                 
                 // Check if each neighbor is even in the grid; if so, check if neighbor is hidden, and increment neighborCount and push neighbor to buttonsToFlag if so
                 for (let i = 0; i < neighbors.length; i++) {
@@ -700,21 +698,18 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                             buttonsToFlag.push(neighbors[i]);
                         };
                     }
-                    
-                    if (buttonsToFlag.length > 0) {
-                        bestMove = {
-                            flag: buttonsToFlag,
-                            click: undefined
-                        };
-                        console.log("Best medium move found (flagging):", bestMove);
-                        return bestMove;
-                    }
                 }
-                
+            }
+            if (buttonsToFlag.length > 0) {
+                bestMove = {
+                    flag: buttonsToFlag,
+                    click: undefined
+                };
+                console.log("Best medium move found (flagging):", bestMove);
+                return bestMove;
             }
 
             for (let idx = 0; idx < minefield.length; idx++) {  
-                console.log("Checking index for clicking:", idx);
 
                 if (!getBtn(idx).disabled) continue;
 
@@ -735,12 +730,10 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                     }
                 }
 
-                console.log("Flagged neighbors:", flaggedNeighbors, "Value:", value, "Buttons to click:", buttonsToClick);
-
                 if (flaggedNeighbors == value && buttonsToClick.length > 0) {
                     bestMove = {
                         flag: [],
-                        click: buttonsToClick
+                        click: [buttonsToClick[Math.floor(buttonsToClick.length * Math.random())]]
                     };
                     console.log("Best medium move found (clicking):", bestMove);
                     return bestMove;
@@ -784,7 +777,10 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             }
             await sleep(250);
             // clear highlight and make the click
-            if (move.click !== undefined) {
+            if (move.click === undefined) {
+                return;
+            }
+            else {
                 console.log("aiMakesMove(): clicking:", move.click);
                 for (let idx of move.click) {
                     if ((getBtn(idx)).disabled) continue; // skip if already revealed
@@ -808,16 +804,22 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         // Perform AI turn using existing aiMakesMove function
         const performAiTurn = async () => {
             if (!game_in_progress || currentTurn !== 'ai') return;
-            
-            let move = bestMoveFn();
-            if (!move || typeof move.click === 'undefined') {
-                move = bestEasyMove();
-                move.flag = move.flag || [];
+            console.log("Turn", currentTurn);
+            while (game_in_progress && currentTurn === 'ai') {
+                let move = bestMoveFn();
+                if (!move) {
+                    move = bestEasyMove();
+                    move.flag = move.flag || [];
+                }
+
+                // Use existing aiMakesMove function
+                await aiMakesMove(move);
+
+                if (move.click && move.click.length > 0) {
+                    break;
+                }
             }
-            
-            // Use existing aiMakesMove function
-            await aiMakesMove(move);
-            
+
             if (game_in_progress) {
                 currentTurn = 'player'; // Hand turn back to player
                 // Re-enable clicks for player
