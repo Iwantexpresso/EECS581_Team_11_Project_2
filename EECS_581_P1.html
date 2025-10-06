@@ -599,7 +599,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
                 y: idx / 10
             };
         }
-        const getBtn = idx => document.getElementById(idx.toString());
+        const getBtn = idx => document.getElementById(idx);
 
         function getNeighbors(idx) {
             let neighbors = [idx-1-10, idx-0-10, idx+1-10, idx-1-0, idx+1-0, idx-1+10, idx-0+10, idx+1+10];
@@ -629,7 +629,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             console.log("while exited");
 
             let bestMove = {
-                click: maybeClick,
+                click: [maybeClick],
                 flag: []
             }
             console.log("easy move fn exiting");
@@ -771,7 +771,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
             if (move.click !== undefined) {
                 console.log("aiMakesMove(): clicking:", move.click);
                 for (let idx of move.click) {
-                    if (getBtn(move.click[idx]).disabled) continue; // skip if already revealed
+                    if ((getBtn(idx)).disabled) continue; // skip if already revealed
                     left_click(idx);
                     await sleep(250);
                 }
@@ -781,7 +781,7 @@ Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects
         // call to have the ai start playing alone
         const aiPlayAlone = async () => {
             while (game_in_progress) {
-                newMove = bestMoveFn();
+                let newMove = bestMoveFn();
                 console.log(`${bestMoveFn} selected move:`, newMove);
                 await aiMakesMove(newMove);
             }
