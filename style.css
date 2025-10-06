@@ -1,3 +1,16 @@
+/* 
+Project 2 
+Name: style.css
+Description: css file to handle the minesweegame and additional styling for ai mode and animations
+Authors: Addison Bartelli, Elizabeth Miller, Marco Martinez, Anya Combs, Janna Dungao, Hunter Long
+External Source: https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep - for await-based sleep function
+Creation date: 09/24/25
+Inputs: None
+Outputs: None
+*/
+
+
+
 /*CSS STYLING CODE FOR OVERLAY POSITIONING AND CREATING GRID SHAPE COMES FROM STACK OVERFLOW AND IS ALTERED TO FIT THIS PROGRAM*/
         /*Element with id="container" will follow the regular positioning flow of the html document*/
         #container {

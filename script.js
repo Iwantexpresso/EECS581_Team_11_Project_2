@@ -1,3 +1,14 @@
+/*
+Project 2 
+Name: EECS_581_P1.html
+Description:  JavaScript File that has three modes of Minesweeper: Single player, Interactive AI, and Automatic AI. The AI has three difficulties: Easy, Medium, Hard
+Authors: Addison Bartelli, Elizabeth Miller, Marco Martinez, Anya Combs, Janna Dungao, Hunter Long
+External Source: https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep - for await-based sleep function
+Creation date: 09/24/25
+Inputs: User clicks: Number of mines selection, Game mode selection, (if AI mode) AI difficulty, Canvas tile elements (minefield), F key: Flag mines
+Outputs: Mine tile reveal: Number of mines/mine, add flag to tile, sound effects for: mine reveal, flag placement/removal, game over, game won
+*/
+ 
  "use strict";
         let NUM_MINES; // change this to the result of the input form
         let flag_count; // equal to number of mines to start
